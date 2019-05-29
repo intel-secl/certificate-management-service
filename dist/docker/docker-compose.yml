@@ -1,0 +1,19 @@
+version: "3.6"
+services:
+   cms:
+      image: isecl/cms:latest
+      hostname: cms
+      ports:
+         - 5000:5000
+
+      environment:
+         CMS_LOGLEVEL: DEBUG
+         CMS_PORT: 5005
+
+      volumes:
+         - cms-config-volume:/etc/cms
+         - cms-log-volume:/var/log/cms
+
+volumes:
+   cms-config-volume:
+   cms-log-volume:

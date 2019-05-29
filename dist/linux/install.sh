@@ -33,7 +33,7 @@ export CMS_CA_CERT_SIGNING_EXTENSIONS
 echo Creating Certificate Management Service User ...
 id -u cms 2> /dev/null || useradd cms
 
-echo Installing Workload Service ... 
+echo Installing Certificate Management Service ... 
 # Make the dir to store bin files
 mkdir -p /opt/cms/bin
 cp cms /opt/cms/bin/cms
@@ -50,10 +50,10 @@ mkdir -p /var/run/cms
 chown cms:cms /var/run/cms
 # Create arbitrary data repository in /var/lib
 mkdir -p /var/lib/cms
-chown wls:wls /var/lib/cms
+chown cms:cms /var/lib/cms
 # Create logging directory in /var/log
 mkdir -p /var/log/cms
-chown wls:wls /var/log/cms
+chown cms:cms /var/log/cms
 
 # install system service only if not in a docker container
 echo Installation complete!
