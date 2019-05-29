@@ -9,7 +9,7 @@ cms:
 	env GOOS=linux go build -ldflags "-X intel/isecl/cms/version.Version=$(VERSION) -X intel/isecl/cms/version.GitHash=$(GITCOMMIT)" -o out/cms
 
 installer: cms
-	mkdir -p out/cms
+	mkdir -p out/cms/
 	cp dist/linux/install.sh out/cms/install.sh && chmod +x out/cms/install.sh
 	cp out/cms out/cms/cms
 	makeself out/cms out/cms-$(VERSION).bin "Certificate Management Service $(VERSION)" ./install.sh 

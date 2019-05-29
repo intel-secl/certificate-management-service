@@ -3,26 +3,52 @@
 package main
 
 import (
-	"intel/isecl/cms/resource"
+	"context"
 	"fmt"
+	"intel/isecl/cms/resource"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
-	"io/ioutil"
-	//"syscall"
 	"strconv"
-	"context"
+	"syscall"
 	"time"
 
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	stdlog "log"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/handlers"
 )
 
+func start() error {
+	// first check to see if the pid specified in /var/run is already running
+	if status() == Running {
+		fmt.Println("Certificate Management Service is already running")
+		return nil
+	}
+	// spawn another process
+	fmt.Println("Starting Certificate Management Service ...")
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(os.Args[0], "startServer")
+	cmd.Dir = cwd
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+	// store pid
+	file, _ := os.Create("/var/run/cms/cms.pid")
+	file.WriteString(strconv.Itoa(cmd.Process.Pid))
+	cmd.Process.Release()
+	fmt.Println("Certificate Management Service started")
+	return nil
+}
 
 func startServer() {
-	
+
 	r := mux.NewRouter().PathPrefix("/v2/cms").Subrouter()
 	// Set Resource Endpoints
 	resource.SetCACertificatesEndpoints(r.PathPrefix("/ca-certificates").Subrouter())
@@ -73,7 +99,7 @@ func stopServer() {
 	if err := syscall.Kill(pid, syscall.SIGQUIT); err != nil {
 		log.WithError(err).Error("Failed to kill server")
 	}
-	fmt.Println("Workload Service Stopped")
+	fmt.Println("Certificate Management Service Stopped")
 }
 
 func readPid() (int, error) {

@@ -3,14 +3,13 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"strings"
+	"syscall"
 	//"strconv"
-
 	//csetup "intel/isecl/lib/common/setup"
 )
-
 
 func main() {
 	/* PARSE COMMAND LINE OPTIONS */
@@ -22,30 +21,34 @@ func main() {
 	}
 	switch arg := strings.ToLower(args[0]); arg {
 	/*case "setup":
-		//TODO: Check if CMS_NOSETUP parameter needs to be set
-		if nosetup, err := strconv.ParseBool(os.Getenv("CMS_NOSETUP")); err != nil && nosetup == false {
-			setupRunner := &csetup.Runner{
-				Tasks: []csetup.Task{
-					new(),
-				},
-				AskInput: false,
-			}
-			err := setupRunner.RunTasks(args[1:]...)
-			if err != nil {
-				fmt.Println("Error running setup: ", err)
-				os.Exit(1)
-			}
+	//TODO: Check if CMS_NOSETUP parameter needs to be set
+	if nosetup, err := strconv.ParseBool(os.Getenv("CMS_NOSETUP")); err != nil && nosetup == false {
+		setupRunner := &csetup.Runner{
+			Tasks: []csetup.Task{
+				new(),
+			},
+			AskInput: false,
+		}
+		err := setupRunner.RunTasks(args[1:]...)
+		if err != nil {
+			fmt.Println("Error running setup: ", err)
+			os.Exit(1)
+		}
 		} else {
 			fmt.Println("WLS_NOSETUP is set, skipping setup")
 			os.Exit(1)
-		}*/
+		}
+	}*/
 	case "status":
 		if s := status(); s == Running {
-			fmt.Println("Workload Service is running")
+			fmt.Println("Certificate Management Service is running")
 		} else {
-			fmt.Println("Workload Service is stopped")
+			fmt.Println("Certificate Management Service is stopped")
 		}
 	case "start":
+		start()
+	case "startserver":
+		// this runs in attached mode
 		startServer()
 	case "stop":
 		stopServer()
@@ -95,7 +98,7 @@ func printUsage() {
 	fmt.Printf("===============\n\n")
 	fmt.Printf("usage : %s <command> [<args>]\n\n", os.Args[0])
 	fmt.Printf("Following are the list of commands\n")
-	fmt.Printf("\tsetup\n\n")
+	fmt.Printf("setup:")
 	fmt.Printf("setup command is used to run setup tasks\n")
 	fmt.Printf("\tusage : %s setup [<tasklist>]\n", os.Args[0])
 	fmt.Printf("\t\t<tasklist>-space seperated list of tasks\n")
@@ -103,16 +106,16 @@ func printUsage() {
 	fmt.Printf("\tExample :-\n")
 	fmt.Printf("\t\t%s setup\n", os.Args[0])
 	//fmt.Printf("\t\t%s setup database\n", os.Args[0])
-	fmt.Printf("\tstatus\n\n")
-	fmt.Printf("status command is used to check the status of cms service\n")
+	fmt.Printf("status:\n")
+	fmt.Printf("\tstatus command is used to check the status of cms service\n")
 	fmt.Printf("\tusage : %s status\n", os.Args[0])
-	fmt.Printf("\tstart\n\n")
-	fmt.Printf("start command is used to start the cms server\n")
+	fmt.Printf("start:\n")
+	fmt.Printf("\tstart command is used to start the cms server\n")
 	fmt.Printf("\tusage : %s start\n", os.Args[0])
-	fmt.Printf("\tstop\n\n")
-	fmt.Printf("stop command is used to stop the cms server\n")
-	fmt.Printf("\tusage : %s start\n", os.Args[0])
-	fmt.Printf("\tuninstall\n\n")
-	fmt.Printf("uninstall command is used to uninstall the cms\n")
-	fmt.Printf("\tusage : %s start\n", os.Args[0])
+	fmt.Printf("stop:\n")
+	fmt.Printf("\tstop command is used to stop the cms server\n")
+	fmt.Printf("\tusage : %s stop\n", os.Args[0])
+	fmt.Printf("uninstall:\n")
+	fmt.Printf("\tuninstall command is used to uninstall the cms\n")
+	fmt.Printf("\tusage : %s uninstall\n", os.Args[0])
 }

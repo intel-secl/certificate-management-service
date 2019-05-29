@@ -27,7 +27,7 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 	}
 
 	//TODO: Provide generic path for root CA certificate
-	rootCACertificateBytes, err := ioutil.ReadFile("C:\\Gitlab_repo\\Go_repo\\cms\\resource\\server.crt")
+	rootCACertificateBytes, err := ioutil.ReadFile("/opt/cms/config/rootCA.crt")
 	if err != nil {
 		log.Errorf("Cannot read from Root CA certificate file: %v", err)
 		fmt.Println("Cannot read from Root CA certificate file")
