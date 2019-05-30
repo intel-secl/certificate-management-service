@@ -8,7 +8,7 @@ import (
 	"strings"
 	"syscall"
 	//"strconv"
-	//csetup "intel/isecl/lib/common/setup"
+	csetup "intel/isecl/lib/common/setup"
 )
 
 func main() {
@@ -20,12 +20,11 @@ func main() {
 		return
 	}
 	switch arg := strings.ToLower(args[0]); arg {
-	/*case "setup":
-	//TODO: Check if CMS_NOSETUP parameter needs to be set
-	if nosetup, err := strconv.ParseBool(os.Getenv("CMS_NOSETUP")); err != nil && nosetup == false {
+	case "setup":
 		setupRunner := &csetup.Runner{
 			Tasks: []csetup.Task{
-				new(),
+				new(setup.CreateRootCACertificate),
+				new(setup.CreateTLSCertificate),
 			},
 			AskInput: false,
 		}
@@ -34,11 +33,7 @@ func main() {
 			fmt.Println("Error running setup: ", err)
 			os.Exit(1)
 		}
-		} else {
-			fmt.Println("WLS_NOSETUP is set, skipping setup")
-			os.Exit(1)
-		}
-	}*/
+	
 	case "status":
 		if s := status(); s == Running {
 			fmt.Println("Certificate Management Service is running")
@@ -57,7 +52,6 @@ func main() {
 	default:
 		fmt.Printf("Unrecognized option : %s\n", arg)
 		fallthrough
-
 	case "help", "-help", "--help":
 		printUsage()
 	}
@@ -102,10 +96,8 @@ func printUsage() {
 	fmt.Printf("setup command is used to run setup tasks\n")
 	fmt.Printf("\tusage : %s setup [<tasklist>]\n", os.Args[0])
 	fmt.Printf("\t\t<tasklist>-space seperated list of tasks\n")
-	//fmt.Printf("\t\t\t-Supported tasks - server database\n")
-	fmt.Printf("\tExample :-\n")
-	fmt.Printf("\t\t%s setup\n", os.Args[0])
-	//fmt.Printf("\t\t%s setup database\n", os.Args[0])
+	fmt.Printf("\t\t\t-Supported tasks - create-root-ca-certificate  create-tls-certificate \n")
+	fmt.Printf("\tExample :- setup create-root-ca-certificate\n")
 	fmt.Printf("status:\n")
 	fmt.Printf("\tstatus command is used to check the status of cms service\n")
 	fmt.Printf("\tusage : %s status\n", os.Args[0])

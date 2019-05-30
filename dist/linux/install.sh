@@ -42,6 +42,9 @@ chmod +x /usr/local/bin/cms
 chmod +s /usr/local/bin/cms 
 chown cms:cms /usr/local/bin/cms
 
+# Create config dir
+mkdir -p /opt/cms/config
+
 # Create configuration directory in /etc
 mkdir -p /etc/cms 
 chown cms:cms /etc/cms

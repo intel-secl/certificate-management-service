@@ -74,7 +74,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 
 	for _, extension := range csr.Extensions {
 		if extension.Value[3] == 160 {
-			certificateTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
+			certificateTemplate.KeyUsage |= x509.KeyUsageKeyEncipherment
 		}
 	}
 
