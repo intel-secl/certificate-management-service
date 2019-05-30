@@ -34,7 +34,8 @@ func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) error {
 	}
 
 	certificateTemplate := x509.Certificate{
-		SerialNumber: big.NewInt(0),
+		SerialNumber:       big.NewInt(0),
+		SignatureAlgorithm: x509.SHA384WithRSA,
 		Subject: pkix.Name{
 			CommonName: "CMS",
 		},

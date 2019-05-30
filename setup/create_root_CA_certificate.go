@@ -18,7 +18,8 @@ import (
 
 //RootCertificateTemplate is a template for root CA certificate
 var RootCertificateTemplate = x509.Certificate{
-	SerialNumber: big.NewInt(0),
+	SerialNumber:       big.NewInt(0),
+	SignatureAlgorithm: x509.SHA384WithRSA,
 	Subject: pkix.Name{
 		CommonName: "CMSCA",
 	},
