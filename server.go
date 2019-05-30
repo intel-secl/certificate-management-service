@@ -66,7 +66,7 @@ func startServer() {
 	}
 	l := stdlog.New(httpWriter, "", 0)
 	h := &http.Server{
-		Addr:     fmt.Sprintf(":%d", 9000),
+		Addr:     ":5005",
 		Handler:  handlers.RecoveryHandler(handlers.RecoveryLogger(l), handlers.PrintRecoveryStack(true))(handlers.CombinedLoggingHandler(httpWriter, r)),
 		ErrorLog: l,
 	}
@@ -74,7 +74,7 @@ func startServer() {
 	fmt.Println("Starting Certificate Management Service ...")
 	go func() {
 		fmt.Println("Certificate Management Service Started")
-		if err := h.ListenAndServe(); err != nil {
+		if err := http.ListenAndServeTLS(h.Addr, "/var/lib/cms/Tls.crt", "/var/lib/cms/Tls.key", h.Handler); err != nil {
 			log.Fatal(err)
 		}
 	}()
