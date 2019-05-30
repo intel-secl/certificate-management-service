@@ -26,8 +26,7 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 		return
 	}
 
-	//TODO: Provide generic path for root CA certificate
-	rootCACertificateBytes, err := ioutil.ReadFile("/opt/cms/config/rootCA.crt")
+	rootCACertificateBytes, err := ioutil.ReadFile("/var/lib/cms/rootCA.crt")
 	if err != nil {
 		log.Errorf("Cannot read from Root CA certificate file: %v", err)
 		fmt.Println("Cannot read from Root CA certificate file")

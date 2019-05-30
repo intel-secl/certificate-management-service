@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"intel/isecl/cms/setup"
 	"intel/isecl/cms/validation"
 	"io/ioutil"
 	"math/big"
@@ -32,8 +33,8 @@ func SetCertificatesEndpoints(router *mux.Router) {
 func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) {
 
 	//TODO: Provide generic path for root CA certificate
-	const rootCACertificateFile = "/opt/cms/config/rootCA.crt"
-	const rootCAPrivateKeyFile = "/opt/cms/config/rootCA.key"
+	const rootCACertificateFile = "/var/lib/cms/rootCA.crt"
+	const rootCAPrivateKeyFile = "/var/lib/cms/rootCA.key"
 
 	regexForCRLF := regexp.MustCompile(`\r?\n`)
 	responseBodyBytes, err := ioutil.ReadAll(httpRequest.Body)
@@ -53,7 +54,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	fmt.Println(csr.Subject)
 	fmt.Println(csr.Extensions)
 
-	certificateTemplate := &x509.Certificate{
+	certificateTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(0),
 		Subject: pkix.Name{
 			CommonName: csr.Subject.CommonName,
@@ -92,7 +93,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	priv, _ := rsa.GenerateKey(rand.Reader, 3072)
 	pub := &priv.PublicKey
 
-	certificate, err := x509.CreateCertificate(rand.Reader, certificateTemplate, certificateTemplate, pub, keyPair.PrivateKey)
+	certificate, err := x509.CreateCertificate(rand.Reader, &certificateTemplate, &setup.RootCertificateTemplate, pub, keyPair.PrivateKey)
 	if err != nil {
 		log.Errorf("Cannot create certificate: %v", err)
 		fmt.Println("Cannot create certificate")

@@ -3,10 +3,10 @@ package setup
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"flag"
 	"math/big"
 	"os"
 	"time"
@@ -20,9 +20,10 @@ import (
 type CreateTLSCertificate struct{}
 
 //Run will generate a TLS certificate and key pair and store them in cms config dir
-func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) {
-	flag.Parse()
+func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) error {
 
+	const rootCACertificateFile = "/var/lib/cms/rootCA.crt"
+	const rootCAPrivateKeyFile = "/var/lib/cms/rootCA.key"
 	priv, err := rsa.GenerateKey(rand.Reader, 3072)
 	if err != nil {
 		log.Fatalf("failed to generate private key: %s", err)
@@ -47,12 +48,17 @@ func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) {
 		BasicConstraintsValid: true,
 	}
 
-	certificateBytes, err := x509.CreateCertificate(rand.Reader, &certificateTemplate, &certificateTemplate, &priv.PublicKey, priv)
+	keyPair, err := tls.LoadX509KeyPair(rootCACertificateFile, rootCAPrivateKeyFile)
+	if err != nil {
+		log.Fatalf("Failed to load key pair: %s", err)
+	}
+
+	certificateBytes, err := x509.CreateCertificate(rand.Reader, &certificateTemplate, &RootCertificateTemplate, &priv.PublicKey, keyPair.PrivateKey)
 	if err != nil {
 		log.Fatalf("Failed to create certificate: %s", err)
 	}
 
-	certOut, err := os.Create("/opt/cms/config/rootCA.crt")
+	certOut, err := os.Create("/var/lib/cms/Tls.crt")
 	if err != nil {
 		log.Fatalf("failed to open rootCA.crt file for writing: %s", err)
 	}
@@ -63,10 +69,10 @@ func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) {
 		log.Fatalf("error closing rootCA.crt: %s", err)
 	}
 
-	keyOut, err := os.OpenFile("/opt/cms/config/Tls.key", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile("/var/lib/cms/Tls.key", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Print("failed to open rootCA.key for writing:", err)
-		return
+		return nil
 	}
 	if err := pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}); err != nil {
 		log.Fatalf("failed to write data to Tls.key: %s", err)
@@ -74,8 +80,10 @@ func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) {
 	if err := keyOut.Close(); err != nil {
 		log.Fatalf("error closing Tls.key: %s", err)
 	}
+	return nil
 }
 
 // Validate checks whether or not the CreateTLSCertificate task was successful
-func (createTLSCertificate CreateTLSCertificate) Validate(c csetup.Context) {
+func (createTLSCertificate CreateTLSCertificate) Validate(c csetup.Context) error {
+	return nil
 }

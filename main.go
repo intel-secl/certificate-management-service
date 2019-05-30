@@ -4,11 +4,11 @@ package main
 
 import (
 	"fmt"
+	"intel/isecl/cms/setup"
+	csetup "intel/isecl/lib/common/setup"
 	"os"
 	"strings"
 	"syscall"
-	//"strconv"
-	csetup "intel/isecl/lib/common/setup"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func main() {
 			fmt.Println("Error running setup: ", err)
 			os.Exit(1)
 		}
-	
+
 	case "status":
 		if s := status(); s == Running {
 			fmt.Println("Certificate Management Service is running")
@@ -84,7 +84,15 @@ func status() Status {
 }
 
 func uninstall() {
-	fmt.Println("Not yet supported")
+	fmt.Println("Uninstalling Certificate Management Service....")
+	stopServer()
+	os.RemoveAll("/opt/cms")
+	os.Remove("/usr/local/bin/cms")
+	os.RemoveAll("/etc/cms")
+	os.RemoveAll("/var/run/cms")
+	os.RemoveAll("/var/lib/cms")
+	os.RemoveAll("/var/log/cms")
+	fmt.Println("Certificate Management Service uninstalled")
 }
 
 func printUsage() {
