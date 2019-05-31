@@ -7,6 +7,7 @@ import (
 	"intel/isecl/cms/setup"
 	csetup "intel/isecl/lib/common/setup"
 	"os"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -21,31 +22,35 @@ func main() {
 	}
 	switch arg := strings.ToLower(args[0]); arg {
 	case "setup":
-		installRunner := &csetup.Runner{
-			Tasks: []csetup.Task{
-				setup.Configurer{},
-			},
-			AskInput: false,
-		}
-		err := installRunner.RunTasks("Configurer")
-		if err != nil {
-			fmt.Println("Error running setup: ", err)
+		if nosetup, err := strconv.ParseBool(os.Getenv("CMS_NOSETUP")); err != nil && nosetup == false {
+			installRunner := &csetup.Runner{
+				Tasks: []csetup.Task{
+					setup.Configurer{},
+				},
+				AskInput: false,
+			}
+			err := installRunner.RunTasks("Configurer")
+			if err != nil {
+				fmt.Println("Error running setup: ", err)
+				os.Exit(1)
+			}
+
+			setupRunner := &csetup.Runner{
+				Tasks: []csetup.Task{
+					new(setup.CreateRootCACertificate),
+					new(setup.CreateTLSCertificate),
+				},
+				AskInput: false,
+			}
+			err = setupRunner.RunTasks(args[1:]...)
+			if err != nil {
+				fmt.Println("Error running setup: ", err)
+				os.Exit(1)
+			}
+		} else {
+			fmt.Println("CMS_NOSETUP is set, skipping setup")
 			os.Exit(1)
 		}
-
-		setupRunner := &csetup.Runner{
-			Tasks: []csetup.Task{
-				new(setup.CreateRootCACertificate),
-				new(setup.CreateTLSCertificate),
-			},
-			AskInput: false,
-		}
-		err = setupRunner.RunTasks(args[1:]...)
-		if err != nil {
-			fmt.Println("Error running setup: ", err)
-			os.Exit(1)
-		}
-
 	case "status":
 		if s := status(); s == Running {
 			fmt.Println("Certificate Management Service is running")

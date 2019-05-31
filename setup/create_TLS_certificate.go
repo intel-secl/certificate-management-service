@@ -10,7 +10,7 @@ import (
 	"math/big"
 	"os"
 	"time"
-
+	"intel/isecl/cms/utils"
 	log "github.com/sirupsen/logrus"
 
 	csetup "intel/isecl/lib/common/setup"
@@ -52,6 +52,12 @@ func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) error {
 	keyPair, err := tls.LoadX509KeyPair(rootCACertificateFile, rootCAPrivateKeyFile)
 	if err != nil {
 		log.Fatalf("Failed to load key pair: %s", err)
+	}
+	serialNumber, err := utils.GetNextSerialNumber()
+	if err != nil {
+		log.Errorf("Failed to read next Serial Number: %s", err)
+	} else {
+		certificateTemplate.SerialNumber = serialNumber
 	}
 
 	certificateBytes, err := x509.CreateCertificate(rand.Reader, &certificateTemplate, &RootCertificateTemplate, &priv.PublicKey, keyPair.PrivateKey)

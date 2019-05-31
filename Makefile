@@ -17,7 +17,7 @@ installer: cms
 docker: installer
 	cp dist/docker/entrypoint.sh out/entrypoint.sh && chmod +x out/entrypoint.sh
 	docker build -t isecl/cms:latest -f ./dist/docker/Dockerfile ./out
-#	docker save isecl/cms:latest > ./out/docker-cms-$(VERSION).tar
+	docker save isecl/cms:latest > ./out/docker-cms-$(VERSION).tar
 
 all: docker
 

@@ -54,6 +54,8 @@ func startServer() {
 	// Set Resource Endpoints
 	resource.SetCACertificatesEndpoints(r.PathPrefix("/ca-certificates").Subrouter())
 	resource.SetCertificatesEndpoints(r.PathPrefix("/certificates").Subrouter())
+	// Setup Version Endpoint
+	resource.SetVersionEndpoints(r.PathPrefix("/version").Subrouter())
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)

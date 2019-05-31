@@ -15,8 +15,8 @@ import (
 	"math/big"
 	"net/http"
 	"regexp"
-
 	"time"
+	"intel/isecl/cms/utils"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -77,6 +77,13 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 		if extension.Value[3] == 160 {
 			certificateTemplate.KeyUsage |= x509.KeyUsageKeyEncipherment
 		}
+	}
+
+	serialNumber, err := utils.GetNextSerialNumber()
+	if err != nil {
+		log.Errorf("Failed to read next Serial Number: %s", err)
+	} else {
+		certificateTemplate.SerialNumber = serialNumber
 	}
 
 	if httpRequest.Header.Get("Accept") != "application/x-pem-file" || httpRequest.Header.Get("Content-Type") != "application/x-pem-file" {

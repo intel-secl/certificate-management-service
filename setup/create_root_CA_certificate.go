@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"os"
 	"time"
-
+	"intel/isecl/cms/utils"
 	log "github.com/sirupsen/logrus"
 
 	csetup "intel/isecl/lib/common/setup"
@@ -50,6 +50,12 @@ func (createRootCACertificate CreateRootCACertificate) Run(c csetup.Context) err
 	}
 
 	config.LoadConfiguration()
+	var serialNumber = big.NewInt(0)
+	RootCertificateTemplate.SerialNumber = serialNumber
+	err = utils.WriteSerialNumber(serialNumber)
+	if err != nil {
+		log.Errorf("Cannot write to Serial Number file")
+	}
 
 	certValidity := config.Configuration.CACertValidity
 	if certValidity == 0 {
