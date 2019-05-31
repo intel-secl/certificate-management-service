@@ -19,6 +19,7 @@ fi
 export CMS_USERNAME
 export CMS_PASSWORD
 export CMS_NOSETUP #Default is false
+export CMS_PORT
 
 #CMS certificate specific properties
 export CMS_CA_CERT_VALIDITY #Default is 5 years

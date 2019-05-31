@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"intel/isecl/cms/config"
 	"intel/isecl/cms/resource"
 	"io/ioutil"
 	"net/http"
@@ -65,8 +66,13 @@ func startServer() {
 		httpWriter = httpLogFile
 	}
 	l := stdlog.New(httpWriter, "", 0)
+	config.LoadConfiguration()
+	cmsPort := config.Configuration.Port
+	if cmsPort == "" {
+		cmsPort = "5005"
+	}
 	h := &http.Server{
-		Addr:     ":5005",
+		Addr:     ":" + cmsPort,
 		Handler:  handlers.RecoveryHandler(handlers.RecoveryLogger(l), handlers.PrintRecoveryStack(true))(handlers.CombinedLoggingHandler(httpWriter, r)),
 		ErrorLog: l,
 	}

@@ -8,12 +8,12 @@ import (
 	"encoding/pem"
 	"math/big"
 	"os"
-	"strconv"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 
 	csetup "intel/isecl/lib/common/setup"
+	"intel/isecl/cms/config"
 )
 
 //RootCertificateTemplate is a template for root CA certificate
@@ -22,6 +22,10 @@ var RootCertificateTemplate = x509.Certificate{
 	SignatureAlgorithm: x509.SHA384WithRSA,
 	Subject: pkix.Name{
 		CommonName: "CMSCA",
+		Country: []string{},
+		Province: []string{},
+		Locality: []string{},
+		Organization: []string{},
 	},
 	Issuer: pkix.Name{
 		CommonName: "CMSCA",
@@ -45,17 +49,40 @@ func (createRootCACertificate CreateRootCACertificate) Run(c csetup.Context) err
 		log.Fatalf("failed to generate private key: %s", err)
 	}
 
-	if err != nil {
-		log.Fatalf("failed to generate serial number: %s", err)
-	}
+	config.LoadConfiguration()
 
-	certValidity, err := strconv.Atoi(os.Getenv("CMS_CA_CERT_VALIDITY"))
-	if err != nil {
+	certValidity := config.Configuration.CACertValidity
+	if certValidity == 0 {
 		log.Errorf("Error getting certificate validity: %v", err)
 		// Set to default
 		certValidity = 5
 	}
 	RootCertificateTemplate.NotAfter = time.Now().AddDate(certValidity, 0, 0)
+	
+	if config.Configuration.Organization != "" {
+		RootCertificateTemplate.Subject.Organization = append(RootCertificateTemplate.Subject.Organization, config.Configuration.Organization)
+	} else {
+		RootCertificateTemplate.Subject.Organization = append(RootCertificateTemplate.Subject.Organization, "INTEL")
+	}
+
+	if config.Configuration.Country != "" {
+                RootCertificateTemplate.Subject.Country = append(RootCertificateTemplate.Subject.Country, config.Configuration.Country)
+        } else {
+                RootCertificateTemplate.Subject.Country = append(RootCertificateTemplate.Subject.Country, "US")
+        }
+
+	if config.Configuration.Province != "" {
+                RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Province, config.Configuration.Province)
+        } else {
+                RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Organization, "CA")
+        }
+
+	if config.Configuration.Locality != "" {
+                RootCertificateTemplate.Subject.Locality = append(RootCertificateTemplate.Subject.Locality, config.Configuration.Locality)
+        } else {
+                RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Organization, "SC")
+        }
+
 
 	certificateBytes, err := x509.CreateCertificate(rand.Reader, &RootCertificateTemplate, &RootCertificateTemplate, &priv.PublicKey, priv)
 	if err != nil {

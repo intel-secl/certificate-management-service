@@ -21,6 +21,18 @@ func main() {
 	}
 	switch arg := strings.ToLower(args[0]); arg {
 	case "setup":
+		installRunner := &csetup.Runner{
+			Tasks: []csetup.Task{
+				setup.Configurer{},
+			},
+			AskInput: false,
+		}
+		err := installRunner.RunTasks("Configurer")
+		if err != nil {
+			fmt.Println("Error running setup: ", err)
+			os.Exit(1)
+		}
+
 		setupRunner := &csetup.Runner{
 			Tasks: []csetup.Task{
 				new(setup.CreateRootCACertificate),
@@ -28,7 +40,7 @@ func main() {
 			},
 			AskInput: false,
 		}
-		err := setupRunner.RunTasks(args[1:]...)
+		err = setupRunner.RunTasks(args[1:]...)
 		if err != nil {
 			fmt.Println("Error running setup: ", err)
 			os.Exit(1)
