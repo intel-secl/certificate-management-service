@@ -22,7 +22,7 @@ func main() {
 	}
 	switch arg := strings.ToLower(args[0]); arg {
 	case "setup":
-		if nosetup, err := strconv.ParseBool(os.Getenv("CMS_NOSETUP")); err != nil && nosetup == false {
+		if nosetup, err := strconv.ParseBool(os.Getenv("CMS_NOSETUP")); err == nil && nosetup == false {
 			installRunner := &csetup.Runner{
 				Tasks: []csetup.Task{
 					setup.Configurer{},

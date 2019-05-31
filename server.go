@@ -103,6 +103,7 @@ func stopServer() {
 	pid, err := readPid()
 	if err != nil {
 		log.WithError(err).Error("Failed to stop server")
+		return
 	}
 	if err := syscall.Kill(pid, syscall.SIGQUIT); err != nil {
 		log.WithError(err).Error("Failed to kill server")
