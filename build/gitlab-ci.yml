@@ -3,10 +3,15 @@ image: golang:latest
 before_script:
   - echo "Acquire::http::Proxy \"http://proxy-us.intel.com:911\";" >> /etc/apt/apt.conf
   - echo "Acquire::https::Proxy \"http://proxy-us.intel.com:911\";" >> /etc/apt/apt.conf
+
   - git config --global http.proxy "http://proxy-us.intel.com:911"
+  - git config --global http."https://gitlab.devtools.intel.com".proxy ""
+  - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.devtools.intel.com".insteadOf "https://gitlab.devtools.intel.com"
+
   - echo "[http \"https://gitlab.devtools.intel.com\"]" >> ~/.gitconfig
   - echo "        proxy = \"\"" >> ~/.gitconfig
   - cd $CI_PROJECT_DIR
+  
 variables:
   HTTPS_PROXY: http://proxy-us.intel.com:911
   no_proxy: ".intel.com"
