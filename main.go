@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"intel/isecl/cms/setup"
+	"intel/isecl/cms/constants"
 	csetup "intel/isecl/lib/common/setup"
 	"os"
 	"strconv"
@@ -22,7 +23,7 @@ func main() {
 	}
 	switch arg := strings.ToLower(args[0]); arg {
 	case "setup":
-		if nosetup, err := strconv.ParseBool(os.Getenv("CMS_NOSETUP")); err == nil && nosetup == false {
+		if nosetup, err := strconv.ParseBool(os.Getenv(constants.CMS_NOSETUP)); err == nil && nosetup == false {
 			installRunner := &csetup.Runner{
 				Tasks: []csetup.Task{
 					setup.Configurer{},
@@ -74,8 +75,6 @@ func main() {
 	}
 }
 
-const pidPath = "/var/run/cms/cms.pid"
-
 // Status indicate the process status of WLS
 type Status bool
 
@@ -87,7 +86,7 @@ const (
 func status() Status {
 	pid, err := readPid()
 	if err != nil {
-		os.Remove(pidPath)
+		os.Remove(constants.CMS_PID_FILE)
 		return Stopped
 	}
 	p, err := os.FindProcess(pid)
@@ -103,12 +102,12 @@ func status() Status {
 func uninstall() {
 	fmt.Println("Uninstalling Certificate Management Service....")
 	stopServer()
-	os.RemoveAll("/opt/cms")
-	os.Remove("/usr/local/bin/cms")
-	os.RemoveAll("/etc/cms")
-	os.RemoveAll("/var/run/cms")
-	os.RemoveAll("/var/lib/cms")
-	os.RemoveAll("/var/log/cms")
+	os.RemoveAll(constants.CMS_HOME_DIR)
+	os.Remove(constants.CMS_BIN_SOFTLINK)
+	os.RemoveAll(constants.CMS_CONFIG_DIR)
+	os.RemoveAll(constants.CMS_RUNTIME_INFO_DIR)
+	os.RemoveAll(constants.CMS_DATA_DIR)
+	os.RemoveAll(constants.CMS_LOG_DIR)
 	fmt.Println("Certificate Management Service uninstalled")
 }
 

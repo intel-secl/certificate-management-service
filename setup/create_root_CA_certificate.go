@@ -6,25 +6,26 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"intel/isecl/cms/utils"
 	"math/big"
 	"os"
 	"time"
-	"intel/isecl/cms/utils"
+
 	log "github.com/sirupsen/logrus"
 
-	csetup "intel/isecl/lib/common/setup"
 	"intel/isecl/cms/config"
+	"intel/isecl/cms/constants"
+	csetup "intel/isecl/lib/common/setup"
 )
 
 //RootCertificateTemplate is a template for root CA certificate
 var RootCertificateTemplate = x509.Certificate{
-	SerialNumber:       big.NewInt(0),
 	SignatureAlgorithm: x509.SHA384WithRSA,
 	Subject: pkix.Name{
-		CommonName: "CMSCA",
-		Country: []string{},
-		Province: []string{},
-		Locality: []string{},
+		CommonName:   "CMSCA",
+		Country:      []string{},
+		Province:     []string{},
+		Locality:     []string{},
 		Organization: []string{},
 	},
 	Issuer: pkix.Name{
@@ -64,7 +65,7 @@ func (createRootCACertificate CreateRootCACertificate) Run(c csetup.Context) err
 		certValidity = 5
 	}
 	RootCertificateTemplate.NotAfter = time.Now().AddDate(certValidity, 0, 0)
-	
+
 	if config.Configuration.Organization != "" {
 		RootCertificateTemplate.Subject.Organization = append(RootCertificateTemplate.Subject.Organization, config.Configuration.Organization)
 	} else {
@@ -72,30 +73,29 @@ func (createRootCACertificate CreateRootCACertificate) Run(c csetup.Context) err
 	}
 
 	if config.Configuration.Country != "" {
-                RootCertificateTemplate.Subject.Country = append(RootCertificateTemplate.Subject.Country, config.Configuration.Country)
-        } else {
-                RootCertificateTemplate.Subject.Country = append(RootCertificateTemplate.Subject.Country, "US")
-        }
+		RootCertificateTemplate.Subject.Country = append(RootCertificateTemplate.Subject.Country, config.Configuration.Country)
+	} else {
+		RootCertificateTemplate.Subject.Country = append(RootCertificateTemplate.Subject.Country, "US")
+	}
 
 	if config.Configuration.Province != "" {
-                RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Province, config.Configuration.Province)
-        } else {
-                RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Organization, "CA")
-        }
+		RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Province, config.Configuration.Province)
+	} else {
+		RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Province, "CA")
+	}
 
 	if config.Configuration.Locality != "" {
-                RootCertificateTemplate.Subject.Locality = append(RootCertificateTemplate.Subject.Locality, config.Configuration.Locality)
-        } else {
-                RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Organization, "SC")
-        }
-
+		RootCertificateTemplate.Subject.Locality = append(RootCertificateTemplate.Subject.Locality, config.Configuration.Locality)
+	} else {
+		RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Locality, "SC")
+	}
 
 	certificateBytes, err := x509.CreateCertificate(rand.Reader, &RootCertificateTemplate, &RootCertificateTemplate, &priv.PublicKey, priv)
 	if err != nil {
 		log.Fatalf("Failed to create certificate: %s", err)
 	}
 
-	certOut, err := os.Create("/var/lib/cms/rootCA.crt")
+	certOut, err := os.Create(constants.CMS_ROOT_CA_CERT)
 	if err != nil {
 		log.Fatalf("failed to open rootCA.crt file for writing: %s", err)
 	}
@@ -106,7 +106,7 @@ func (createRootCACertificate CreateRootCACertificate) Run(c csetup.Context) err
 		log.Fatalf("error closing rootCA.crt: %s", err)
 	}
 
-	keyOut, err := os.OpenFile("/var/lib/cms/rootCA.key", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile(constants.CMS_ROOT_CA_KEY, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Print("failed to open rootCA.key for writing:", err)
 		return nil
