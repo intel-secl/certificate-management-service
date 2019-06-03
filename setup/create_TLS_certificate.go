@@ -7,10 +7,12 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"intel/isecl/cms/constants"
+	"intel/isecl/cms/utils"
 	"math/big"
 	"os"
 	"time"
-	"intel/isecl/cms/utils"
+
 	log "github.com/sirupsen/logrus"
 
 	csetup "intel/isecl/lib/common/setup"
@@ -22,8 +24,8 @@ type CreateTLSCertificate struct{}
 //Run will generate a TLS certificate and key pair and store them in cms config dir
 func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) error {
 
-	const rootCACertificateFile = "/var/lib/cms/rootCA.crt"
-	const rootCAPrivateKeyFile = "/var/lib/cms/rootCA.key"
+	const rootCACertificateFile = constants.CMS_ROOT_CA_CERT
+	const rootCAPrivateKeyFile = constants.CMS_ROOT_CA_KEY
 	priv, err := rsa.GenerateKey(rand.Reader, 3072)
 	if err != nil {
 		log.Fatalf("failed to generate private key: %s", err)
@@ -65,7 +67,7 @@ func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) error {
 		log.Fatalf("Failed to create certificate: %s", err)
 	}
 
-	certOut, err := os.Create("/var/lib/cms/Tls.crt")
+	certOut, err := os.Create(constants.CMS_TLS_CERT)
 	if err != nil {
 		log.Fatalf("failed to open rootCA.crt file for writing: %s", err)
 	}
@@ -76,7 +78,7 @@ func (createTLSCertificate CreateTLSCertificate) Run(c csetup.Context) error {
 		log.Fatalf("error closing rootCA.crt: %s", err)
 	}
 
-	keyOut, err := os.OpenFile("/var/lib/cms/Tls.key", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile(constants.CMS_TLS_KEY, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Print("failed to open rootCA.key for writing:", err)
 		return nil

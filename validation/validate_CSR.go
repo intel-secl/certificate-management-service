@@ -33,18 +33,19 @@ func ValidateCertificateRequest(csrInput string) bool {
 	*/
 	//70 for rootCA certificate, 128 for JWT signing certificate, 160 for TLS certificate
 	validKeyUsageValue := []int{70, 128, 160}
+	validCommonName := []string{"CMS"}
 	foundBasicConstraints := false
 	foundKeyUsage := false
 	noOfLoops := 0
 	csrBase64Bytes, err := base64.StdEncoding.DecodeString(csrInput)
 	if err != nil {
-		log.Fatalf("Failed to read CSR: %s", err)
+		log.Errorf("Failed to read CSR: %s", err)
 		return false
 	}
 
 	csr, err := x509.ParseCertificateRequest(csrBase64Bytes)
 	if err != nil {
-		log.Fatalf("Failed to parse CSR: %s", err)
+		log.Errorf("Failed to parse CSR: %s", err)
 		return false
 	}
 
@@ -69,9 +70,12 @@ func ValidateCertificateRequest(csrInput string) bool {
 	}
 
 	//TODO: Add the list of components whose  common names are whitelisted
-	if csr.Subject.CommonName != "CMSCA" {
-		log.Errorf("Incorrect Common name: %v", csr.Subject.CommonName)
-		return false
+	for _, commonName := range validCommonName {
+		if csr.Subject.CommonName != commonName {
+			log.Errorf("Incorrect Common name: %v", csr.Subject.CommonName)
+			return false
+		}
+		
 	}
 
 	if csr.SignatureAlgorithm != x509.SHA384WithRSA {

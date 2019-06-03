@@ -9,14 +9,16 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"intel/isecl/cms/constants"
 	"intel/isecl/cms/setup"
+	"intel/isecl/cms/utils"
 	"intel/isecl/cms/validation"
 	"io/ioutil"
 	"math/big"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
-	"intel/isecl/cms/utils"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -32,28 +34,26 @@ func SetCertificatesEndpoints(router *mux.Router) {
 //GetCertificates is used to get the JWT Signing/TLS certificate upon JWT valildation
 func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) {
 
-	//TODO: Provide generic path for root CA certificate
-	const rootCACertificateFile = "/var/lib/cms/rootCA.crt"
-	const rootCAPrivateKeyFile = "/var/lib/cms/rootCA.key"
-
 	regexForCRLF := regexp.MustCompile(`\r?\n`)
 	responseBodyBytes, err := ioutil.ReadAll(httpRequest.Body)
 	if err != nil {
 		log.Errorf("Cannot read http request body: %v", err)
 		fmt.Println("Cannot read http request body")
+		httpWriter.WriteHeader(http.StatusBadRequest)
 	}
 
 	csrInput := regexForCRLF.ReplaceAllString(string(responseBodyBytes), "")
+	csrInput = strings.Replace(csrInput, "-----BEGIN CERTIFICATE REQUEST-----", "", -1)
+	csrInput = strings.Replace(csrInput, "-----END CERTIFICATE REQUEST-----", "", -1)
 	valid := validation.ValidateCertificateRequest(csrInput)
 	if !valid {
 		log.Errorf("Invalid CSR provided")
 		fmt.Println("Invalid CSR provided")
+		httpWriter.WriteHeader(http.StatusBadRequest)
+		return
 	}
 	csrBase64Bytes, err := base64.StdEncoding.DecodeString(csrInput)
 	csr, err := x509.ParseCertificateRequest(csrBase64Bytes)
-	fmt.Println(csr.Subject)
-	fmt.Println(csr.Extensions)
-
 	certificateTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(0),
 		Subject: pkix.Name{
@@ -91,11 +91,12 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 		return
 	}
 
-	keyPair, err := tls.LoadX509KeyPair(rootCACertificateFile, rootCAPrivateKeyFile)
+	keyPair, err := tls.LoadX509KeyPair(constants.CMS_ROOT_CA_CERT, constants.CMS_ROOT_CA_KEY)
 
 	if err != nil {
 		log.Errorf("Cannot load key pair: %v", err)
 		fmt.Println("Cannot load key pair")
+		httpWriter.WriteHeader(http.StatusInternalServerError)
 	}
 	priv, _ := rsa.GenerateKey(rand.Reader, 3072)
 	pub := &priv.PublicKey
@@ -104,6 +105,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	if err != nil {
 		log.Errorf("Cannot create certificate: %v", err)
 		fmt.Println("Cannot create certificate")
+		httpWriter.WriteHeader(http.StatusInternalServerError)
 	}
 	httpWriter.WriteHeader(http.StatusOK)
 	httpWriter.Header().Add("Content-Type", "application/x-pem-file")

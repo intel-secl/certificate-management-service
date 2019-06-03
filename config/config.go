@@ -2,42 +2,13 @@ package config
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
+	"intel/isecl/cms/constants"
 	csetup "intel/isecl/lib/common/setup"
 	"os"
-	"strconv"
+
+	log "github.com/sirupsen/logrus"
+	yaml "gopkg.in/yaml.v2"
 )
-
-// Do not use this casing for GoLang constants unless you are making it match environment variable syntax in bash
-
-// CMS_NOSETUP is a boolean environment variable for skipping WLS Setup tasks
-const CMS_NOSETUP = "CMS_NOSETUP"
-
-// CMS_PORT is an integer environment variable for specifying the port WLS should listen on
-const CMS_PORT = "CMS_PORT"
-
-// CMS_USERNAME is a string environment variable for specifying the username to use for the database connection
-const CMS_USERNAME = "CMS_USERNAME"
-
-// CMS_PASSWORD is a string environment variable for specifying the password to use for the database connection
-const CMS_PASSWORD = "CMS_PASSWORD"
-
-const CMS_CA_CERT_VALIDITY = "CMS_CA_CERT_VALIDITY"
-
-const CMS_ORGANIZATION = "CMS_ORGANIZATION"
-
-const CMS_LOCALITY = "CMS_ORGANIZATION"
-
-const CMS_PROVINCE = "CMS_PROVINCE"
-
-const CMS_COUNTRY = "CMS_COUNTRY"
-
-const CMS_CA_CERT_SAN_LIST = "CMS_CA_CERT_SAN_LIST"
-
-const CMS_CA_CERT_SIGNING_EXTENSIONS = "CMS_CA_CERT_SIGNING_EXTENSIONS"
-
-const CMS_LOGLEVEL = "CMS_LOGLEVEL"
 
 // Configuration is the global configuration struct that is marshalled/unmarshaled to a persisted yaml file
 var Configuration struct {
@@ -94,46 +65,45 @@ func SaveConfiguration(c csetup.Context) error {
 	requiredConfigs := [...]csetup.EnvVars{
 
 		{
-			CMS_PORT,
+			constants.CMS_PORT,
 			&Configuration.Port,
 			"CMS Port",
 			true,
 		},
 		{
-                        "CMS_CA_CERT_VALIDITY",
-                        &Configuration.CACertValidity,
-                        "CMS Certificate Validity",
-                        true,
-                },
+			constants.CMS_CA_CERT_VALIDITY,
+			&Configuration.CACertValidity,
+			"CMS Certificate Validity",
+			true,
+		},
 		{
-                        "CMS_ORGANIZATION",
-                        &Configuration.Organization,
-                        "CMS Organization",
-                        true,
-                },
+			constants.CMS_ORGANIZATION,
+			&Configuration.Organization,
+			"CMS Organization",
+			true,
+		},
 		{
-                        "CMS_LOCALITY",
-                        &Configuration.Locality,
-                        "CMS Locality",
-                        true,
-                },
+			constants.CMS_LOCALITY,
+			&Configuration.Locality,
+			"CMS Locality",
+			true,
+		},
 		{
-                        "CMS_PROVINCE",
-                        &Configuration.Province,
-                        "CMS Province",
-                        true,
-                },
+			constants.CMS_PROVINCE,
+			&Configuration.Province,
+			"CMS Province",
+			true,
+		},
 		{
-                        "CMS_COUNTRY",
-                        &Configuration.Country,
-                        "CMS Country",
-                        true,
-                },
+			constants.CMS_COUNTRY,
+			&Configuration.Country,
+			"CMS Country",
+			true,
+		},
 	}
 
 	for _, cv := range requiredConfigs {
 		_, _, err = c.OverrideValueFromEnvVar(cv.Name, cv.ConfigVar, cv.Description, cv.EmptyOkay)
-		fmt.Println(cv.Name + ": " + strconv.FormatBool(cv.EmptyOkay))
 		if err != nil {
 			fmt.Println(err)
 			requiredConfigsPresent = false
@@ -147,9 +117,10 @@ func SaveConfiguration(c csetup.Context) error {
 	return fmt.Errorf("one or more required environment variables for setup not present. log file has details")
 }
 
+//LoadConfiguration loads the CMS configuration from config.yml file
 func LoadConfiguration() {
 	// load from config
-	file, err := os.Open("/etc/cms/config.yml")
+	file, err := os.Open(constants.CMS_CONFIG_FILE)
 	if err == nil {
 		defer file.Close()
 		yaml.NewDecoder(file).Decode(&Configuration)

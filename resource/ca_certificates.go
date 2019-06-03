@@ -4,6 +4,7 @@ import (
 	//"encoding/pem"
 
 	"fmt"
+	"intel/isecl/cms/constants"
 	"intel/isecl/cms/validation"
 	"net/http"
 
@@ -26,10 +27,11 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 		return
 	}
 
-	rootCACertificateBytes, err := ioutil.ReadFile("/var/lib/cms/rootCA.crt")
+	rootCACertificateBytes, err := ioutil.ReadFile(constants.CMS_ROOT_CA_CERT)
 	if err != nil {
 		log.Errorf("Cannot read from Root CA certificate file: %v", err)
 		fmt.Println("Cannot read from Root CA certificate file")
+		httpWriter.WriteHeader(http.StatusInternalServerError)
 	}
 	httpWriter.Header().Set("Content-Type", "application/x-pem-file")
 	httpWriter.WriteHeader(http.StatusOK)

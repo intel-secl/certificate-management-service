@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/resource"
+	"intel/isecl/cms/constants"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -41,7 +42,7 @@ func start() error {
 		return err
 	}
 	// store pid
-	file, _ := os.Create("/var/run/cms/cms.pid")
+	file, _ := os.Create(constants.CMS_PID_FILE)
 	file.WriteString(strconv.Itoa(cmd.Process.Pid))
 	cmd.Process.Release()
 	fmt.Println("Certificate Management Service started")
@@ -61,7 +62,7 @@ func startServer() {
 	signal.Notify(stop, os.Interrupt)
 
 	httpWriter := os.Stderr
-	if httpLogFile, err := os.OpenFile("/var/log/cms/http.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666); err != nil {
+	if httpLogFile, err := os.OpenFile(constants.CMS_HTTP_LOG, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666); err != nil {
 		log.WithError(err).Info("Failed to open http log file")
 	} else {
 		defer httpLogFile.Close()
@@ -82,7 +83,7 @@ func startServer() {
 	fmt.Println("Starting Certificate Management Service ...")
 	go func() {
 		fmt.Println("Certificate Management Service Started")
-		if err := http.ListenAndServeTLS(h.Addr, "/var/lib/cms/Tls.crt", "/var/lib/cms/Tls.key", h.Handler); err != nil {
+		if err := http.ListenAndServeTLS(h.Addr, constants.CMS_TLS_CERT, constants.CMS_TLS_KEY, h.Handler); err != nil {
 			log.Fatal(err)
 		}
 	}()
@@ -112,7 +113,7 @@ func stopServer() {
 }
 
 func readPid() (int, error) {
-	pidData, err := ioutil.ReadFile("/var/run/cms/cms.pid")
+	pidData, err := ioutil.ReadFile(constants.CMS_PID_FILE)
 	if err != nil {
 		log.WithError(err).Debug("Failed to read pidfile")
 		return 0, err
