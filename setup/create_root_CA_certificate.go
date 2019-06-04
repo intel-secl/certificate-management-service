@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"errors"
 	"intel/isecl/cms/utils"
 	"math/big"
 	"os"
@@ -47,7 +48,8 @@ func (createRootCACertificate CreateRootCACertificate) Run(c csetup.Context) err
 
 	priv, err := rsa.GenerateKey(rand.Reader, 3072)
 	if err != nil {
-		log.Fatalf("failed to generate private key: %s", err)
+		log.Errorf("Failed to generate root CA key pair: %s", err)
+		return errors.New("Failed to generate root CA key pair")
 	}
 
 	config.LoadConfiguration()
@@ -56,6 +58,7 @@ func (createRootCACertificate CreateRootCACertificate) Run(c csetup.Context) err
 	err = utils.WriteSerialNumber(serialNumber)
 	if err != nil {
 		log.Errorf("Cannot write to Serial Number file")
+		return errors.New("Cannot write to Serial Number file")
 	}
 
 	certValidity := config.Configuration.CACertValidity
@@ -92,30 +95,36 @@ func (createRootCACertificate CreateRootCACertificate) Run(c csetup.Context) err
 
 	certificateBytes, err := x509.CreateCertificate(rand.Reader, &RootCertificateTemplate, &RootCertificateTemplate, &priv.PublicKey, priv)
 	if err != nil {
-		log.Fatalf("Failed to create certificate: %s", err)
+		log.Errorf("Failed to create certificate: %s", err)
+		return errors.New("Failed to create certificate")
 	}
 
 	certOut, err := os.Create(constants.CMS_ROOT_CA_CERT)
 	if err != nil {
-		log.Fatalf("failed to open rootCA.crt file for writing: %s", err)
+		log.Errorf("Failed to open root CA certificate file: %s", err)
+		return errors.New("Failed to open root CA certificate file")
 	}
 	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: certificateBytes}); err != nil {
-		log.Fatalf("failed to write data to rootCA.crt: %s", err)
+		log.Errorf("Failed to write data to rootCA.crt: %s", err)
+		return errors.New("Failed to write data to root CA certificate file")
 	}
 	if err := certOut.Close(); err != nil {
-		log.Fatalf("error closing rootCA.crt: %s", err)
+		log.Errorf("Error closing root CA certificate file: %s", err)
+		return errors.New("Error closing root CA certificate file")
 	}
 
 	keyOut, err := os.OpenFile(constants.CMS_ROOT_CA_KEY, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		log.Print("failed to open rootCA.key for writing:", err)
-		return nil
+		log.Print("Failed to open root CA key file:", err)
+		return errors.New("Failed to open root CA key file")
 	}
 	if err := pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}); err != nil {
-		log.Fatalf("failed to write data to rootCA.key: %s", err)
+		log.Errorf("Failed to write data to root CA key file: %s", err)
+		return errors.New("Failed to write data to root CA key file")
 	}
 	if err := keyOut.Close(); err != nil {
-		log.Fatalf("error closing rootCA.key: %s", err)
+		log.Errorf("Error closing root CA key file: %s", err)
+		return errors.New("Error closing root CA key file")
 	}
 	return nil
 }
