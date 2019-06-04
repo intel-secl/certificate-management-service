@@ -45,11 +45,11 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	csrInput := regexForCRLF.ReplaceAllString(string(responseBodyBytes), "")
 	csrInput = strings.Replace(csrInput, "-----BEGIN CERTIFICATE REQUEST-----", "", -1)
 	csrInput = strings.Replace(csrInput, "-----END CERTIFICATE REQUEST-----", "", -1)
-	valid := validation.ValidateCertificateRequest(csrInput)
-	if !valid {
-		log.Errorf("Invalid CSR provided")
-		fmt.Println("Invalid CSR provided")
+	err = validation.ValidateCertificateRequest(csrInput)
+	if err != nil {
+		log.Errorf("Invalid CSR provided: %v", err)
 		httpWriter.WriteHeader(http.StatusBadRequest)
+		httpWriter.Write([]byte("Invalid CSR provided: " + err.Error()))
 		return
 	}
 	csrBase64Bytes, err := base64.StdEncoding.DecodeString(csrInput)
@@ -82,21 +82,26 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	serialNumber, err := utils.GetNextSerialNumber()
 	if err != nil {
 		log.Errorf("Failed to read next Serial Number: %s", err)
+		httpWriter.WriteHeader(http.StatusInternalServerError)
+		httpWriter.Write([]byte("Failed to read next Serial Number"))
+		return
 	} else {
 		certificateTemplate.SerialNumber = serialNumber
 	}
 
 	if httpRequest.Header.Get("Accept") != "application/x-pem-file" || httpRequest.Header.Get("Content-Type") != "application/x-pem-file" {
+		log.Errorf("Accept type not supported")
 		httpWriter.WriteHeader(http.StatusNotAcceptable)
+		httpWriter.Write([]byte("Accept type not supported"))
 		return
 	}
 
 	keyPair, err := tls.LoadX509KeyPair(constants.CMS_ROOT_CA_CERT, constants.CMS_ROOT_CA_KEY)
 
 	if err != nil {
-		log.Errorf("Cannot load key pair: %v", err)
-		fmt.Println("Cannot load key pair")
+		log.Errorf("Cannot load TLS key pair: %v", err)
 		httpWriter.WriteHeader(http.StatusInternalServerError)
+		httpWriter.Write([]byte("Cannot load TLS key pair"))
 	}
 	priv, _ := rsa.GenerateKey(rand.Reader, 3072)
 	pub := &priv.PublicKey
@@ -104,8 +109,8 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	certificate, err := x509.CreateCertificate(rand.Reader, &certificateTemplate, &setup.RootCertificateTemplate, pub, keyPair.PrivateKey)
 	if err != nil {
 		log.Errorf("Cannot create certificate: %v", err)
-		fmt.Println("Cannot create certificate")
 		httpWriter.WriteHeader(http.StatusInternalServerError)
+		httpWriter.Write([]byte("Cannot create certificate"))
 	}
 	httpWriter.WriteHeader(http.StatusOK)
 	httpWriter.Header().Add("Content-Type", "application/x-pem-file")

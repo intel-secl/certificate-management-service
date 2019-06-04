@@ -18,6 +18,7 @@ var Configuration struct {
 	Locality       string
 	Province       string
 	Country        string
+	WhitelistedCN  string
 	ConfigComplete bool
 }
 
@@ -100,6 +101,12 @@ func SaveConfiguration(c csetup.Context) error {
 			"CMS Country",
 			true,
 		},
+		{
+			constants.CMS_WHITELISTED_CN_LIST,
+			&Configuration.WhitelistedCN,
+			"Common Names of Whitelisted Services",
+			false,
+		},
 	}
 
 	for _, cv := range requiredConfigs {
@@ -107,14 +114,14 @@ func SaveConfiguration(c csetup.Context) error {
 		if err != nil {
 			fmt.Println(err)
 			requiredConfigsPresent = false
-			log.Errorf("environment variable %s required - but not set", cv.Name)
+			log.Errorf("Environment variable %s required - but not set", cv.Name)
 		}
 	}
 	if requiredConfigsPresent {
 		Configuration.ConfigComplete = true
 		return Save()
 	}
-	return fmt.Errorf("one or more required environment variables for setup not present. log file has details")
+	return fmt.Errorf("One or more required environment variables for setup not present. log file has details")
 }
 
 //LoadConfiguration loads the CMS configuration from config.yml file
