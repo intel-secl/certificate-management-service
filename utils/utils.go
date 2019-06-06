@@ -45,7 +45,7 @@ func ReadSerialNumber() (*big.Int, error) {
 }
 
 func WriteSerialNumber(serialNumber *big.Int) error {	
-    err := ioutil.WriteFile(constants.CMS_SERIAL_NUMBER_FILE, serialNumber.Bytes(), 660)
+    err := ioutil.WriteFile(constants.CMS_SERIAL_NUMBER_FILE, serialNumber.Bytes(), 0660)
 	if err != nil {
 		log.Errorf("Failed to write serial-number to file: %s", err)
 		return err		

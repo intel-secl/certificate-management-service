@@ -50,26 +50,6 @@ func ValidateCertificateRequest(csrInput string) error {
 		return errors.New("Failed to parse CSR")
 	}
 
-	if len(csr.Subject.Country) != 1 {
-		log.Errorf("Incorrect Country name: %v", csr.Subject)
-		return errors.New("Incorrect Country name")
-	}
-
-	if len(csr.Subject.Province) != 1 {
-		log.Errorf("Incorrect Province name: %v", csr.Subject)
-		return errors.New("Incorrect Province name")
-	}
-
-	if len(csr.Subject.Locality) != 1 {
-		log.Errorf("Incorrect Locality name: %v", csr.Subject)
-		return errors.New("Incorrect Locality name")
-	}
-
-	if len(csr.Subject.Organization) != 1 && csr.Subject.Organization[0] != "INTEL" {
-		log.Errorf("Incorrect Organization name: %v", csr.Subject)
-		return errors.New("Incorrect Organization name")
-	}
-
 	config.LoadConfiguration()
 	for index, commonName := range strings.Split(config.Configuration.WhitelistedCN, ",") {
 		if csr.Subject.CommonName == commonName {
