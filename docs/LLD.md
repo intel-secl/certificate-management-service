@@ -20,7 +20,7 @@ Retrieve the root CA Certificate configured in CMS
 - Content-Type: `application/x-pem-file`
 
 Example Response:
-i```pem
+```pem
 -----BEGIN CERTIFICATE-----
 MIIEEjCCAnqgAwIBAgIBADANBgkqhkiG9w0BAQwFADA6MQswCQYDVQQGEwJVUzEL
 MAkGA1UECBMCU0MxDjAMBgNVBAoTBUlOVEVMMQ4wDAYDVQQDEwVDTVNDQTAeFw0x
