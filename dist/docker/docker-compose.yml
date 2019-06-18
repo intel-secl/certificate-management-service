@@ -1,14 +1,15 @@
 version: "3.6"
 services:
+  
    cms:
       image: isecl/cms:latest
       hostname: cms
       ports:
-         - 5000:5000
+         - 8443:8443
 
       environment:
-         CMS_LOGLEVEL: DEBUG
-         CMS_PORT: 5005
+         CMS_ADMIN_USERNAME: ${CMS_ADMIN_USERNAME:-admin}
+        #
 
       volumes:
          - cms-config-volume:/etc/cms

@@ -1,70 +1,87 @@
 #!/bin/bash
 
-# READ .env file from ~/cms.env or ./cms.env
+# READ .env file 
+echo PWD IS $(pwd)
 if [ -f ~/cms.env ]; then 
     echo Reading Installation options from `realpath ~/cms.env`
     source ~/cms.env
-elif [ -f ./cms.env ]; then
-    echo Reading Installation options from `realpath ./cms.env`
-        source ./cms.env
+elif [ -f ../cms.env ]; then
+    echo Reading Installation options from `realpath ../cms.env`
+    source ../cms.env
+else
+    echo No .env file found
+    CMS_NOSETUP="true"
 fi
 
-# assert that installer is ran as root
-if [[ $EUID -ne 0 ]]; then
-   echo "This installer must be run as root" 
-   exit 1
-fi
-
-#CMS basic properties
-export CMS_USERNAME
-export CMS_PASSWORD
-export CMS_NOSETUP #Default is false
+# Export all known variables
 export CMS_PORT
 
-#CMS certificate specific properties
-export CMS_CA_CERT_VALIDITY #Default is 5 years
-export CMS_ORGANIZATION
-export CMS_LOCALITY
-export CMS_PROVINCE
-export CMS_COUNTRY
-export CMS_CA_CERT_SAN_LIST
-export CMS_WHITELISTED_CN_LIST
-export CMS_CA_CERT_SIGNING_EXTENSIONS
+export CMS_ADMIN_USERNAME
 
+export CMS_TLS_HOSTS
 
-echo Creating Certificate Management Service User ...
+if [[ $EUID -ne 0 ]]; then 
+    echo "This installer must be run as root"
+    exit 1
+fi
+
+echo "Setting up Certificate Management Service Linux User..."
 id -u cms 2> /dev/null || useradd cms
 
-echo Installing Certificate Management Service ... 
-# Make the dir to store bin files
-mkdir -p /opt/cms/bin
-cp cms /opt/cms/bin/cms
-ln -s /opt/cms/bin/cms /usr/local/bin/cms
-chmod +x /usr/local/bin/cms
-chmod +s /usr/local/bin/cms 
-chown cms:cms /usr/local/bin/cms
+echo "Installing Certificate Management Service..."
+
+COMPONENT_NAME=cms
+PRODUCT_HOME=/opt/$COMPONENT_NAME
+BIN_PATH=$PRODUCT_HOME/bin
+DB_SCRIPT_PATH=$PRODUCT_HOME/dbscripts
+LOG_PATH=/var/log/$COMPONENT_NAME/
+CONFIG_PATH=/etc/$COMPONENT_NAME/
+
+mkdir -p $BIN_PATH && chown cms:cms $BIN_PATH/
+cp $COMPONENT_NAME $BIN_PATH/ && chown cms:cms $BIN_PATH/*
+chmod 750 $BIN_PATH/*
+ln -sfT $BIN_PATH/$COMPONENT_NAME /usr/bin/$COMPONENT_NAME
+
+mkdir -p $DB_SCRIPT_PATH && chown cms:cms $DB_SCRIPT_PATH/
 
 # Create configuration directory in /etc
-mkdir -p /etc/cms 
-chown cms:cms /etc/cms
-# Create PID file directory in /var/run
-mkdir -p /var/run/cms
-chown cms:cms /var/run/cms
-# Create arbitrary data repository in /var/lib
-mkdir -p /var/lib/cms
-chown cms:cms /var/lib/cms
-# Create logging directory in /var/log
-mkdir -p /var/log/cms
-chown cms:cms /var/log/cms
+mkdir -p $CONFIG_PATH && chown cms:cms $CONFIG_PATH
+chmod 700 $CONFIG_PATH
+chmod g+s $CONFIG_PATH
 
-# install system service only if not in a docker container
-echo Installation complete!
+# Create logging dir in /var/log
+mkdir -p $LOG_PATH && chown cms:cms $LOG_PATH
+chmod 661 $LOG_PATH
+chmod g+s $LOG_PATH
 
-echo Running setup tasks ...
-cms setup
-SETUP_RESULT=$?
+# Install systemd script
+cp cms.service $PRODUCT_HOME && chown cms:cms $PRODUCT_HOME/cms.service && chown cms:cms $PRODUCT_HOME
 
-# now run it
-if [ ${SETUP_RESULT} == 0 ]; then
-    cms start
+# Enable systemd service
+systemctl disable cms.service > /dev/null 2>&1
+systemctl enable $PRODUCT_HOME/cms.service
+systemctl daemon-reload
+
+# check if CMS_NOSETUP is defined
+if [ "${CMS_NOSETUP,,}" == "true" ]; then
+    echo "CMS_NOSETUP is true, skipping setup"
+    echo "Installation completed successfully!"
+else 
+    $COMPONENT_NAME setup all
+    SETUPRESULT=$?
+    if [ ${SETUPRESULT} == 0 ]; then 
+        systemctl start $COMPONENT_NAME
+        echo "Waiting for daemon to settle down before checking status"
+        sleep 3
+        systemctl status $COMPONENT_NAME 2>&1 > /dev/null
+        if [ $? != 0 ]; then
+            echo "Installation completed with Errors - $COMPONENT_NAME daemon not started."
+            echo "Please check errors in syslog using \`journalctl -u $COMPONENT_NAME\`"
+            exit 1
+        fi
+        echo "$COMPONENT_NAME daemon is running"
+        echo "Installation completed successfully!"
+    else 
+        echo "Installation completed with errors"
+    fi
 fi

@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2019 Intel Corporation
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 package utils
 
 import (
@@ -5,6 +9,7 @@ import (
 	"net/http"
 	"math/big"
 	"io/ioutil"
+	"os"
 	"intel/isecl/cms/constants"
 	log "github.com/sirupsen/logrus"
 )
@@ -33,7 +38,7 @@ func GetNextSerialNumber() (*big.Int, error) {
 }
 
 func ReadSerialNumber() (*big.Int, error) {	
-	sn, err := ioutil.ReadFile(constants.CMS_SERIAL_NUMBER_FILE)
+	sn, err := ioutil.ReadFile(constants.SerialNumberPath)
 	if err != nil {
 		log.Errorf("Cannot read from Serial Number file: %v", err)
 		return nil, err
@@ -45,7 +50,8 @@ func ReadSerialNumber() (*big.Int, error) {
 }
 
 func WriteSerialNumber(serialNumber *big.Int) error {	
-    err := ioutil.WriteFile(constants.CMS_SERIAL_NUMBER_FILE, serialNumber.Bytes(), 0660)
+	err := ioutil.WriteFile(constants.SerialNumberPath, serialNumber.Bytes(), 0660)
+	os.Chmod(constants.SerialNumberPath, 0660) //As ioutils is not able to set right permissions above
 	if err != nil {
 		log.Errorf("Failed to write serial-number to file: %s", err)
 		return err		

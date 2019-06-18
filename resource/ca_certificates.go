@@ -1,8 +1,12 @@
+/*
+ * Copyright (C) 2019 Intel Corporation
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 package resource
 
 import (
 	"intel/isecl/cms/constants"
-	"intel/isecl/cms/validation"
+	"intel/isecl/cms/config"
 	"net/http"
 
 	"io/ioutil"
@@ -11,10 +15,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// SetCACertificatesEndpoints is used to set the endpoints for CA certificate handling APIs
-func SetCACertificatesEndpoints(router *mux.Router) {
-	router.HandleFunc("", GetCACertificates).Methods("GET")
-	router.Use(validation.JwtAuthentication)
+// SetCACertificates is used to set the endpoints for CA certificate handling APIs
+func SetCACertificates(router *mux.Router, config *config.Configuration) {
+	router.HandleFunc("/ca-certificates", GetCACertificates).Methods("GET")
 }
 
 //GetCACertificates is used to get the root CA certificate upon JWT valildation
@@ -25,7 +28,7 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 		return
 	}
 
-	rootCACertificateBytes, err := ioutil.ReadFile(constants.CMS_ROOT_CA_CERT)
+	rootCACertificateBytes, err := ioutil.ReadFile(constants.RootCACertPath)
 	if err != nil {
 		log.Errorf("Cannot read from Root CA certificate file: %v", err)
 		httpWriter.WriteHeader(http.StatusInternalServerError)

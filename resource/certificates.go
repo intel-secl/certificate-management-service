@@ -1,4 +1,8 @@
-package resource
+/*
+ * Copyright (C) 2019 Intel Corporation
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+ package resource
 
 import (
 	"crypto/rand"
@@ -10,11 +14,11 @@ import (
 	"encoding/pem"
 	"fmt"
 	"intel/isecl/cms/constants"
-	"intel/isecl/cms/setup"
 	"intel/isecl/cms/utils"
+	"intel/isecl/cms/config"
 	"intel/isecl/cms/validation"
+	"intel/isecl/cms/tasks"
 	"io/ioutil"
-	"math/big"
 	"net/http"
 	"regexp"
 	"strings"
@@ -25,14 +29,16 @@ import (
 	//"io/ioutil"
 )
 
-// SetCertificatesEndpoints is used to set the endpoints for certificate handling APIs
-func SetCertificatesEndpoints(router *mux.Router) {
-	router.HandleFunc("", GetCertificates).Methods("POST")
+// SetCertificates is used to set the endpoints for certificate handling APIs
+func SetCertificates(router *mux.Router, config *config.Configuration) {
+	router.HandleFunc("/certificates", func(w http.ResponseWriter, r *http.Request) {
+		GetCertificates(w, r, config)
+	}).Methods("POST")
 	router.Use(validation.JwtAuthentication)
 }
 
 //GetCertificates is used to get the JWT Signing/TLS certificate upon JWT valildation
-func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) {
+func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, config *config.Configuration) {
 
 	regexForCRLF := regexp.MustCompile(`\r?\n`)
 	responseBodyBytes, err := ioutil.ReadAll(httpRequest.Body)
@@ -45,7 +51,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	csrInput := regexForCRLF.ReplaceAllString(string(responseBodyBytes), "")
 	csrInput = strings.Replace(csrInput, "-----BEGIN CERTIFICATE REQUEST-----", "", -1)
 	csrInput = strings.Replace(csrInput, "-----END CERTIFICATE REQUEST-----", "", -1)
-	err = validation.ValidateCertificateRequest(csrInput)
+	err = validation.ValidateCertificateRequest(config, csrInput)
 	if err != nil {
 		log.Errorf("Invalid CSR provided: %v", err)
 		httpWriter.WriteHeader(http.StatusBadRequest)
@@ -55,7 +61,6 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	csrBase64Bytes, err := base64.StdEncoding.DecodeString(csrInput)
 	csr, err := x509.ParseCertificateRequest(csrBase64Bytes)
 	certificateTemplate := x509.Certificate{
-		SerialNumber: big.NewInt(0),
 		Subject: pkix.Name{
 			CommonName: csr.Subject.CommonName,
 		},
@@ -74,7 +79,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	}
 
 	for _, extension := range csr.Extensions {
-		if extension.Value[3] == 160 {
+		if len(extension.Value) == 4 && extension.Value[3] == 160 {
 			certificateTemplate.KeyUsage |= x509.KeyUsageKeyEncipherment
 		}
 	}
@@ -83,7 +88,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	if err != nil {
 		log.Errorf("Failed to read next Serial Number: %s", err)
 		httpWriter.WriteHeader(http.StatusInternalServerError)
-		httpWriter.Write([]byte("Failed to read next Serial Number"))
+		httpWriter.Write([]byte("Failed to read next Serial Number" + err.Error()))
 		return
 	} else {
 		certificateTemplate.SerialNumber = serialNumber
@@ -96,7 +101,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 		return
 	}
 
-	keyPair, err := tls.LoadX509KeyPair(constants.CMS_ROOT_CA_CERT, constants.CMS_ROOT_CA_KEY)
+	keyPair, err := tls.LoadX509KeyPair(constants.RootCACertPath, constants.RootCAKeyPath)
 
 	if err != nil {
 		log.Errorf("Cannot load TLS key pair: %v", err)
@@ -105,8 +110,8 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) 
 	}
 	priv, _ := rsa.GenerateKey(rand.Reader, 3072)
 	pub := &priv.PublicKey
-
-	certificate, err := x509.CreateCertificate(rand.Reader, &certificateTemplate, &setup.RootCertificateTemplate, pub, keyPair.PrivateKey)
+	
+	certificate, err := x509.CreateCertificate(rand.Reader, &certificateTemplate, &tasks.RootCertificateTemplate, pub, keyPair.PrivateKey)
 	if err != nil {
 		log.Errorf("Cannot create certificate: %v", err)
 		httpWriter.WriteHeader(http.StatusInternalServerError)

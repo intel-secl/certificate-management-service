@@ -1,7 +1,7 @@
-FROM centos:latest
+FROM registry.access.redhat.com/rhel7:7.5
 
-COPY cms-*.bin /tmp/cms
+COPY cms-*.bin /tmp/cms.bin
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN env CMS_NOSETUP=true && chmod +x /tmp/cms && /tmp/cms && rm /tmp/cms
+RUN chmod 755 /tmp/cms.bin && env TDS_NOSETUP=true /tmp/cms.bin && rm /tmp/cms.bin
 
-ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh"]

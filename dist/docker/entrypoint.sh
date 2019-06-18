@@ -1,3 +1,3 @@
-#!/bin/bash 
+#!/bin/bash
 
-cms setup && cms startServer
+cms setup all && cms run

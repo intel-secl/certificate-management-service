@@ -20,6 +20,14 @@ stages:
   - build
   - test
   - deploy
+  - pages
+
+compile:
+  stage: build
+  tags:
+    - go
+  script:
+    - go build ./...
 
 test:
   stage: test
@@ -33,13 +41,6 @@ test:
     paths:
       - "cover.html"
 
-compile:
-  stage: build
-  tags:
-    - go
-  script:
-    - go build ./...
-
 installer:
   stage: deploy
   tags:
@@ -47,7 +48,7 @@ installer:
   script:
     - apt-get update && apt-get install -y makeself
     - make installer
-    - cp ./docs/swagger.yml ./out/swagger.yml
+    - cp ./doc/swagger.yml ./out/swagger.yml
   artifacts:
     paths:
       - "out/cms-*.bin"
@@ -63,9 +64,38 @@ docker:
     - curl -sSL https://get.docker.com/ | sh
     - apt-get update && apt-get install -y makeself
     - make docker
-    - cp ./docs/swagger.yml ./out/swagger.yml
+    - cp ./doc/swagger.yml ./out/swagger.yml    
+    - cp ./dist/docker/docker-compose.yml ./out/docker-compose.yml
   artifacts:
     paths:
-      - "out/*.tar"
+      - "out/*.tar"      
+      - "out/docker-compose.yml"
       - "out/swagger.yml"
     expire_in: 1 week
+
+
+lld:
+  stage: deploy
+  tags:
+    - go
+  script:
+    - apt update && apt install -y pandoc
+    - pandoc --standalone --css pandoc.css -f markdown_github -t html5 doc/LLD.md -o LLD.html
+  artifacts:
+    paths:
+      - LLD.html
+
+pages:
+  stage: pages
+  tags:
+    - go
+  dependencies:
+    - test
+    - lld
+  script:
+    - mkdir -p public/
+    - cp cover.html public/cover.html
+    - cp LLD.html public/LLD.html
+  artifacts:
+    paths:
+    - public

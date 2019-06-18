@@ -16,7 +16,7 @@ import (
 )
 
 //ValidateCertificateRequest is used to validate the Certificate Signing Request
-func ValidateCertificateRequest(csrInput string) error {
+func ValidateCertificateRequest(conf *config.Configuration, csrInput string) error {
 	//var csrBytes []byte
 	oidExtensionBasicConstraints := []int{2, 5, 29, 19}
 	oidExtensionKeyUsage := []int{2, 5, 29, 15}
@@ -50,11 +50,10 @@ func ValidateCertificateRequest(csrInput string) error {
 		return errors.New("Failed to parse CSR")
 	}
 
-	config.LoadConfiguration()
-	for index, commonName := range strings.Split(config.Configuration.WhitelistedCN, ",") {
+	for index, commonName := range strings.Split(conf.WhitelistedCN, ",") {
 		if csr.Subject.CommonName == commonName {
 			break
-		}else if index == len(strings.Split(config.Configuration.WhitelistedCN, ",")) - 1 {
+		}else if index == len(strings.Split(conf.WhitelistedCN, ",")) - 1 {
 			log.Errorf("Common name is not whitelisted: %v", csr.Subject.CommonName)
 			return errors.New("Common name is not whitelisted")
 		}
