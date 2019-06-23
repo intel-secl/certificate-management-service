@@ -27,6 +27,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"intel/isecl/authservice/middleware"
 
 	stdlog "log"
 
@@ -34,9 +35,6 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-
-	// Import driver for GORM
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 type App struct {
@@ -80,6 +78,9 @@ func (a *App) printUsage() {
 	fmt.Fprintln(w, "        - Option [--force] overwrites any existing files, and always generate root_ca signed TLS keypair")
 	fmt.Fprintln(w, "        - Argument <host_names> is a list of host names used by local machine, seperated by comma")
 	fmt.Fprintln(w, "        - Environment variable CMS_HOST_NAMES=<host_names> can be set alternatively")
+	fmt.Fprintln(w, "    cms setup auth_cert [--force]")
+	fmt.Fprintln(w, "        - Create its own self signed JWT keypair in /etc/cms/jwt for quality of life")
+	fmt.Fprintln(w, "        - Option [--force] overwrites any existing files, and always generate new JWT keypair and token")
 	fmt.Fprintln(w, "")
 }
 
@@ -227,6 +228,7 @@ func (a *App) Run(args []string) error {
 		if args[2] != "tls" &&
 			args[2] != "root_ca" &&
 			args[2] != "server" &&
+			args[2] != "auth_cert" &&
 			args[2] != "all" {
 			a.printUsage()
 			return errors.New("No such setup task")
@@ -254,13 +256,18 @@ func (a *App) Run(args []string) error {
 					Config:           a.configuration(),
 				},
 				tasks.TLS{
-					Flags:         flags,
+					Flags:            flags,
 					RootCAKeyFile:    constants.RootCAKeyPath,
 					RootCACertFile:   constants.RootCACertPath,
-					TLSCertFile:   constants.TLSCertPath,
-					TLSKeyFile:    constants.TLSKeyPath,
-					ConsoleWriter: os.Stdout,
+					TLSCertFile:      constants.TLSCertPath,
+					TLSKeyFile:       constants.TLSKeyPath,
+					ConsoleWriter:    os.Stdout,
 					Config:           a.configuration(),
+				},
+				tasks.AuthCert{
+					Flags:         flags,
+					ConsoleWriter: os.Stdout,
+					Config:        a.configuration(),
 				},				
 			},
 			AskInput: false,
@@ -284,12 +291,21 @@ func (a *App) startServer() error {
 	c := a.configuration()
 
 	// Create Router, set routes
-	r := mux.NewRouter().PathPrefix("/cms/v1").Subrouter()
+	r := mux.NewRouter()
+	sr := r.PathPrefix("/cms/v1").Subrouter()	
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
-			s(r,c)
+			s(sr,c)
 		}
-	}(resource.SetVersion, resource.SetCACertificates, resource.SetCertificates)
+	}(resource.SetVersion, resource.SetCACertificates)
+
+	sr = r.PathPrefix("/cms/v1/certificates").Subrouter()
+	sr.Use(middleware.NewTokenAuth())
+	func(setters ...func(*mux.Router, *config.Configuration)) {
+		for _, s := range setters {
+			s(sr,c)
+		}
+	}(resource.SetCertificates)
 
 	tlsconfig := &tls.Config{
 		MinVersion: tls.VersionTLS12,
@@ -309,6 +325,7 @@ func (a *App) startServer() error {
 		TLSConfig: tlsconfig,
 	}
 
+	log.Info("Failed to start HTTPS server.............")
 	// dispatch web server go routine
 	go func() {
 		tlsCert := constants.TLSCertPath
@@ -455,6 +472,10 @@ func validateSetupArgs(cmd string, args []string) error {
 			return fmt.Errorf("Fail to parse arguments: %s", err.Error())
 		}
 		return validateCmdAndEnv(env_names_cmd_opts, fs)
+
+	case "auth_cert":
+		// this has a default port value on 8443
+		return nil
 
 	case "all":
 		if len(args) != 0 {

@@ -9,7 +9,6 @@ import (
 	"intel/isecl/cms/version"
 	"intel/isecl/cms/config"
 	"net/http"
-
 	"github.com/gorilla/mux"
 )
 

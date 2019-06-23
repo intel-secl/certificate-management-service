@@ -6,7 +6,6 @@ package validation
 
 import (
 	"crypto/x509"
-	"encoding/base64"
 	"errors"
 	"strings"
 
@@ -16,7 +15,7 @@ import (
 )
 
 //ValidateCertificateRequest is used to validate the Certificate Signing Request
-func ValidateCertificateRequest(conf *config.Configuration, csrInput string) error {
+func ValidateCertificateRequest(conf *config.Configuration, csrBase64Bytes []byte) error {
 	//var csrBytes []byte
 	oidExtensionBasicConstraints := []int{2, 5, 29, 19}
 	oidExtensionKeyUsage := []int{2, 5, 29, 15}
@@ -38,11 +37,6 @@ func ValidateCertificateRequest(conf *config.Configuration, csrInput string) err
 	foundBasicConstraints := false
 	foundKeyUsage := false
 	noOfLoops := 0
-	csrBase64Bytes, err := base64.StdEncoding.DecodeString(csrInput)
-	if err != nil {
-		log.Errorf("Failed to read CSR: %s", err)
-		return errors.New("Failed to read CSR")
-	}
 
 	csr, err := x509.ParseCertificateRequest(csrBase64Bytes)
 	if err != nil {

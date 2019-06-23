@@ -20,16 +20,18 @@ import (
 // Configuration is the global configuration struct that is marshalled/unmarshaled to a persisted yaml file
 // Probably should embed a config generic struct
 type Configuration struct {
-	configFile     string
-	Port           int
-	LogLevel       log.Level
+	configFile       string
+	Port             int
+	LogLevel         log.Level
 
-	CACertValidity int
-	Organization   string
-	Locality       string
-	Province       string
-	Country        string
-	WhitelistedCN  string
+	CACertValidity         int
+	Organization           string
+	Locality               string
+	Province               string
+	Country                string
+	WhitelistedCN          string
+	KeyAlgorithm           string
+	KeyAlgorithmLength     int
 
 	AuthDefender struct {
 		MaxAttempts         int
@@ -82,7 +84,7 @@ func Load(path string) *Configuration {
 		yaml.NewDecoder(file).Decode(&c)
 	} else {
 		// file doesnt exist, create a new blank one
-		c.LogLevel = log.ErrorLevel
+		c.LogLevel = log.DebugLevel
 	}
 
 	c.configFile = path

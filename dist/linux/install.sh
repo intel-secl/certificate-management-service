@@ -35,7 +35,7 @@ PRODUCT_HOME=/opt/$COMPONENT_NAME
 BIN_PATH=$PRODUCT_HOME/bin
 DB_SCRIPT_PATH=$PRODUCT_HOME/dbscripts
 LOG_PATH=/var/log/$COMPONENT_NAME/
-CONFIG_PATH=/etc/$COMPONENT_NAME/
+CONFIG_PATH=/etc/$COMPONENT_NAME
 
 mkdir -p $BIN_PATH && chown cms:cms $BIN_PATH/
 cp $COMPONENT_NAME $BIN_PATH/ && chown cms:cms $BIN_PATH/*
@@ -48,6 +48,11 @@ mkdir -p $DB_SCRIPT_PATH && chown cms:cms $DB_SCRIPT_PATH/
 mkdir -p $CONFIG_PATH && chown cms:cms $CONFIG_PATH
 chmod 700 $CONFIG_PATH
 chmod g+s $CONFIG_PATH
+
+# Create jwt certs directory in config
+mkdir -p $CONFIG_PATH/jwt && chown cms:cms $CONFIG_PATH/jwt
+chmod 700 $CONFIG_PATH/jwt
+chmod g+s $CONFIG_PATH/jwt
 
 # Create logging dir in /var/log
 mkdir -p $LOG_PATH && chown cms:cms $LOG_PATH

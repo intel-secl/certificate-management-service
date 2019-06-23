@@ -16,11 +16,16 @@ const (
 	LogFile                       = "cms.log"
 	HTTPLogFile                   = "http.log"
 	ConfigFile                    = "config.yml"
+	TokenKeyFile                  = "cms-jwt-key.pem"
+	TrustedJWTSigningCertsDir     = ConfigDir + "jwt/"
 	RootCACertPath                = ConfigDir + "root-ca-cert.pem"
 	RootCAKeyPath                 = ConfigDir + "root-ca-key.pem"
 	TLSCertPath                   = ConfigDir + "tls-cert.pem"
 	TLSKeyPath                    = ConfigDir + "tls-key.pem"
-	SerialNumberPath              = ConfigDir + "serial-number"
+	SerialNumberPath              = ConfigDir + "serial-number"	
+	TokenSignKeysAndCertDir       = ConfigDir + "certs/tokensign/"
+	TokenSignKeyFile              = TokenSignKeysAndCertDir + "key.pem"
+	TokenSignCertFile             = TokenSignKeysAndCertDir + "jwtsigncert.pem"
 	PIDFile                       = "cms.pid"
 	ServiceRemoveCmd              = "systemctl disable cms"
 	HashingAlgorithm              = crypto.SHA384
@@ -30,6 +35,16 @@ const (
 	DefaultAuthDefendIntervalMins = 5
 	DefaultAuthDefendLockoutMins  = 15
 	DefaultSSLCertFilePath        = ConfigDir + "cms_cert.pem"
+	DefaultRootCACommonName       = "CMSCA"
+	DefaultPort                   = 8443
+	DefaultWhitelistedCN          = "CMS,AAS"
+	DefaultOrganization           = "INTEL"
+	DefaultCountry                = "US"
+	DefaultProvince               = "CA"
+	DefaultLocality               = "SC"
+	DefaultCACertValidiy          = 5
+	DefaultKeyAlgorithm           = "rsa"
+	DefaultKeyAlgorithmLength     = 3072
 )
 
 // State represents whether or not a daemon is running or not

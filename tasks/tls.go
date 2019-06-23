@@ -6,18 +6,16 @@
 
  import (
 	 "crypto/rand"
-	 "crypto/rsa"
 	 "crypto/x509"
-	 "crypto/x509/pkix"
-	 "encoding/pem"
 	 "crypto/tls"
 	 "errors"
 	 "flag"
 	 "fmt"
 	 "intel/isecl/lib/common/setup"
 	 "intel/isecl/lib/common/validation"
-	 "intel/isecl/cms/utils"
+	 "intel/isecl/cms/libcommon/crypt"
 	 "intel/isecl/cms/config"
+	 "intel/isecl/cms/utils"
 	 "io"
 	 "net"
 	 "os"
@@ -47,60 +45,46 @@
 	 return (conn.LocalAddr().(*net.UDPAddr)).IP.String(), nil
  }
  
- func createSelfSignedCert(ts TLS, hosts []string) (key []byte, cert []byte, err error) {
-	 reader := rand.Reader
-	 k, err := rsa.GenerateKey(reader, 4096)
+ func createTLSCert(ts TLS, hosts string) (key []byte, cert []byte, err error) { 	 
+	 csrData, key, err := crypt.CreateKeyPairAndCertificateRequest("CMS", hosts, ts.Config.KeyAlgorithm, ts.Config.KeyAlgorithmLength)
+	 if err != nil {
+		return nil, nil, err
+	 }
+	 
+	 clientCSR, err := x509.ParseCertificateRequest(csrData)
+    if err != nil {
+		return nil, nil, err
+	}
+	
+	serialNumber, err := utils.GetNextSerialNumber()
+	 if err != nil {
+		return nil, nil, err
+	}
+
+	 clientCRTTemplate := x509.Certificate{
+        Signature:          clientCSR.Signature,
+        SignatureAlgorithm: clientCSR.SignatureAlgorithm,
+
+        PublicKeyAlgorithm: clientCSR.PublicKeyAlgorithm,
+        PublicKey:          clientCSR.PublicKey,
+
+        SerialNumber: serialNumber,
+        Issuer:       RootCertificateTemplate.Issuer,
+        Subject:      clientCSR.Subject,
+        NotBefore:    time.Now(),
+        NotAfter:     time.Now().AddDate(1, 0, 0),
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+        ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	 }
+
+	rootKeyPair, err := tls.LoadX509KeyPair(ts.RootCACertFile, ts.RootCAKeyFile)
 	 if err != nil {
 		 return
 	 }
-	 
-	 serialNumber, err := utils.GetNextSerialNumber()
-	 if err != nil {
-		 return
-	 }
- 
-	 certificateTemplate := x509.Certificate{
-		 SerialNumber: serialNumber,
-		 SignatureAlgorithm: x509.SHA384WithRSA,
-		 Subject: pkix.Name{
-			 CommonName: "CMS",
-		 },
-		 Issuer: pkix.Name{
-			 CommonName: "CMSCA",
-		 },
-		 NotBefore: time.Now(),
-		 NotAfter:  time.Now().AddDate(1, 0, 0),
- 
-		 KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		 ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		 BasicConstraintsValid: true,
-	 }
- 
-	 
-	 // parse hosts
-	 for _, h := range hosts {
-		 if ip := net.ParseIP(h); ip != nil {
-			 certificateTemplate.IPAddresses = append(certificateTemplate.IPAddresses, ip)
-		 } else {
-			 certificateTemplate.DNSNames = append(certificateTemplate.DNSNames, h)
-		 }
-	 }
- 	 
-	 rootKeyPair, err := tls.LoadX509KeyPair(ts.RootCACertFile, ts.RootCAKeyFile)
-	 if err != nil {
-		 return
-	 }
- 	 	 
-	 cert, err = x509.CreateCertificate(rand.Reader, &certificateTemplate, &RootCertificateTemplate, &k.PublicKey, rootKeyPair.PrivateKey)
-	 if err != nil {
-		 return nil, nil, err
-	 }
-	 
-	 key = x509.MarshalPKCS1PrivateKey(k)
-	 if err != nil {
-		 return
-	 }
-	 
+	cert, err = x509.CreateCertificate(rand.Reader, &clientCRTTemplate, &RootCertificateTemplate, clientCSR.PublicKey, rootKeyPair.PrivateKey)
+    if err != nil {
+        return nil, nil, err
+    }
 	 return
  }
  
@@ -132,31 +116,18 @@
 			 }
 		 }
 		 
-		 key, cert, err := createSelfSignedCert(ts, hosts)
+		 key, cert, err := createTLSCert(ts, *host)
 		 if err != nil {
 			 return fmt.Errorf("tls setup: %v", err)
 		 }
-		 // marshal private key to disk
-		 keyOut, err := os.OpenFile(ts.TLSKeyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0) // open file with restricted permissions
+		 err = crypt.SavePrivateKeyAsPKCS8(key, ts.TLSKeyFile)
 		 if err != nil {
-			 return fmt.Errorf("tls setup: %v", err)
-		 }
-		 // private key should not be world readable
-		 os.Chmod(ts.TLSKeyFile, 0640)
-		 defer keyOut.Close()
-		 if err := pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: key}); err != nil {
-			 return fmt.Errorf("tls setup: %v", err)
-		 }
-		 // marshal cert to disk
-		 certOut, err := os.OpenFile(ts.TLSCertFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0)
+			return fmt.Errorf("tls setup: %v", err)
+		}
+		 err = crypt.SavePemCert(cert, ts.TLSCertFile)
 		 if err != nil {
-			 return fmt.Errorf("tls setup: %v", err)
-		 }
-		 os.Chmod(ts.TLSCertFile, 0644)
-		 defer certOut.Close()
-		 if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: cert}); err != nil {
-			 return fmt.Errorf("tls setup: %v", err)
-		 }
+			return fmt.Errorf("tls setup: %v", err)
+		}
 	 } else {
 		 fmt.Println("TLS already configured, skipping")
 	 }
