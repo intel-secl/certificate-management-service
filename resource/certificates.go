@@ -116,5 +116,5 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	httpWriter.WriteHeader(http.StatusOK)
 	httpWriter.Header().Add("Content-Type", "application/x-pem-file")	
 	pem.Encode(httpWriter, &pem.Block{Type: "CERTIFICATE", Bytes: certificate})
-	return
+	return	
 }

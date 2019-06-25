@@ -15,6 +15,7 @@
 	 "intel/isecl/lib/common/validation"
 	 "intel/isecl/cms/libcommon/crypt"
 	 "intel/isecl/cms/config"
+	 "intel/isecl/cms/constants"
 	 "intel/isecl/cms/utils"
 	 "io"
 	 "net"
@@ -77,7 +78,7 @@
         ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 	 }
 
-	rootKeyPair, err := tls.LoadX509KeyPair(ts.RootCACertFile, ts.RootCAKeyFile)
+	rootKeyPair, err := tls.LoadX509KeyPair(constants.RootCACertPath, constants.RootCAKeyPath)
 	 if err != nil {
 		 return
 	 }
@@ -120,11 +121,11 @@
 		 if err != nil {
 			 return fmt.Errorf("tls setup: %v", err)
 		 }
-		 err = crypt.SavePrivateKeyAsPKCS8(key, ts.TLSKeyFile)
+		 err = crypt.SavePrivateKeyAsPKCS8(key, constants.TLSKeyPath)
 		 if err != nil {
 			return fmt.Errorf("tls setup: %v", err)
 		}
-		 err = crypt.SavePemCert(cert, ts.TLSCertFile)
+		 err = crypt.SavePemCert(cert, constants.TLSCertPath)
 		 if err != nil {
 			return fmt.Errorf("tls setup: %v", err)
 		}
@@ -134,12 +135,13 @@
 	 return nil
  }
  
- func (ts TLS) Validate(c setup.Context) error {
-	 _, err := os.Stat(ts.TLSCertFile)
+ func (ts TLS) Validate(c setup.Context) error {	 
+	fmt.Fprintln(ts.ConsoleWriter, "Validating tls setup...")
+	 _, err := os.Stat(constants.TLSCertPath)
 	 if os.IsNotExist(err) {
 		 return errors.New("TLSCertFile is not configured")
 	 }
-	 _, err = os.Stat(ts.TLSKeyFile)
+	 _, err = os.Stat(constants.TLSKeyPath)
 	 if os.IsNotExist(err) {
 		 return errors.New("TLSKeyFile is not configured")
 	 }

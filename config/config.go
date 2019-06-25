@@ -29,7 +29,6 @@ type Configuration struct {
 	Locality               string
 	Province               string
 	Country                string
-	WhitelistedCN          string
 	KeyAlgorithm           string
 	KeyAlgorithmLength     int
 

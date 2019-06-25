@@ -37,12 +37,6 @@ func (s Server) Run(c setup.Context) error {
 	}
 	fmt.Fprintf(s.ConsoleWriter, "Using HTTPS port: %d\n", s.Config.Port)
 
-	// Assign default values
-	s.Config.WhitelistedCN, err = c.GetenvString("CMS_WHITELISTED_CN_LIST", "Certificate Management Service Whitelisted Common Names")
-	if err != nil {
-		s.Config.WhitelistedCN = constants.DefaultWhitelistedCN
-	}
-
 	s.Config.KeyAlgorithm, err = c.GetenvString("CMS_KEY_ALGORITHM", "Certificate Management Service Key Algorithm")
 	if err != nil {
 		s.Config.KeyAlgorithm = constants.DefaultKeyAlgorithm

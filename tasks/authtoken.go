@@ -15,21 +15,19 @@
 	 "io"
 	 "os"
 	 "encoding/pem"
-	 jwtauth "intel/isecl/cms/libcommon/jwt"
+	 jwtauth "intel/isecl/authservice/libcommon/jwt"
 	 ct "intel/isecl/authservice/libcommon/types"
  )
  
- // Should move this to lib common, as it is duplicated across CMS and TDA
- 
- type AuthCert struct {
+ type Cms_Auth_Token struct {
 	 Flags            []string
 	 ConsoleWriter   io.Writer
 	 Config          *config.Configuration	
  }
 
  
- func createAuthCert(at AuthCert) ( err error) { 	 
-	cert, key, err := crypt.CreateKeyPairAndCertificate("CMS JWT Signing", "127.0.0.1", at.Config.KeyAlgorithm, at.Config.KeyAlgorithmLength)
+ func createCmsAuthToken(at Cms_Auth_Token) ( err error) { 	 
+	cert, key, err := crypt.CreateKeyPairAndCertificate("CMS JWT Signing", "", at.Config.KeyAlgorithm, at.Config.KeyAlgorithmLength)
 	if err != nil {
 	   return err
 	}
@@ -49,22 +47,20 @@
 		 fmt.Println(err)
 		 return err
 	 }
-	 ur := []ct.UserRole {ct.UserRole{"CMS","CertificateRequester","CN:AAS"}}
-	 claims := ct.UserRoles{ur}
-	 fmt.Println(claims)
-	 jwt, err := factory.Create(&claims,"Setup JWT for AAS", 0)
+	 ur := []ct.RoleInfo {ct.RoleInfo{"CMS","CertificateRequester","CN:AAS"}}
+	 claims := ct.RoleSlice{ur}
+	 jwt, err := factory.Create(&claims,"CMS JWT Token", 0)
 	 if err != nil {
 		 fmt.Println(err)
 		 return err
 	 }
-	 fmt.Println("\nJWT :",jwt)
-	 fmt.Printf("\n\n Token Generation Complete. Testing Token verification and retrieving claims\n\n")
+	 fmt.Println("\nJWT Token:",jwt)
 	 return
  }
  
- func (at AuthCert) Run(c setup.Context) error {
+ func (at Cms_Auth_Token) Run(c setup.Context) error {
 	 fmt.Fprintln(at.ConsoleWriter, "Running auth token setup...")
-	 fs := flag.NewFlagSet("AuthCert", flag.ContinueOnError)
+	 fs := flag.NewFlagSet("CmsAuthToken", flag.ContinueOnError)
 	 force := fs.Bool("force", false, "force recreation, will overwrite any existing auth token")
  
 	 err := fs.Parse(at.Flags)
@@ -72,7 +68,7 @@
 		 return err
 	 }
 	 if *force || at.Validate(c) != nil {
-		 err := createAuthCert(at)
+		 err := createCmsAuthToken(at)
 		 if err != nil {
 			 return fmt.Errorf("auth token setup: %v", err)
 		 }
@@ -82,7 +78,8 @@
 	 return nil
  }
  
- func (at AuthCert) Validate(c setup.Context) error {
+ func (at Cms_Auth_Token) Validate(c setup.Context) error {	 
+	fmt.Fprintln(at.ConsoleWriter, "Validating auth token setup...")
 	 _, err := os.Stat(constants.TrustedJWTSigningCertsDir + constants.TokenKeyFile)
 	 if os.IsNotExist(err) {
 		 return errors.New("Auth Token is not configured")

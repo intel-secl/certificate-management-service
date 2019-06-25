@@ -23,10 +23,8 @@
 	 "time"	 
  )
  
- type RootCa struct {
+ type Root_Ca struct {
 	 Flags            []string
-	 RootCAKeyFile    string
-	 RootCACertFile   string
 	 ConsoleWriter    io.Writer
 	 Config           *config.Configuration
  }
@@ -45,7 +43,7 @@
 	IsCA:                  true,
  }
 
- func getRootCACertTemplate(ca RootCa, pubKey crypto.PublicKey) (caCertTemplate x509.Certificate, err error) {	
+ func getRootCACertTemplate(ca Root_Ca, pubKey crypto.PublicKey) (caCertTemplate x509.Certificate, err error) {	
 	var serialNumber = big.NewInt(0)
 	err = utils.WriteSerialNumber(serialNumber)
 	if err != nil {
@@ -90,7 +88,7 @@
 	return RootCertificateTemplate, err
 }
 
- func createRootCACert(ca RootCa) (privKey crypto.PrivateKey, cert []byte, err error) {	
+ func createRootCACert(ca Root_Ca) (privKey crypto.PrivateKey, cert []byte, err error) {	
 	privKey, pubKey, err := crypt.GenerateKeyPair(ca.Config.KeyAlgorithm, ca.Config.KeyAlgorithmLength)
 	if err != nil {
 		return nil, nil, err
@@ -107,7 +105,7 @@
  }
  
 
- func (ca RootCa) Run(c setup.Context) error {
+ func (ca Root_Ca) Run(c setup.Context) error {
 	 fmt.Fprintln(ca.ConsoleWriter, "Running Root CA setup...")
 	 fs := flag.NewFlagSet("root_ca", flag.ContinueOnError)
 	 force := fs.Bool("force", false, "force recreation, will overwrite any existing Root CA keys")
@@ -127,11 +125,11 @@
 		 }
 		 
 		 //Store key and certificate
-		 err = crypt.SavePrivateKeyAsPKCS8(key, ca.RootCAKeyFile)
+		 err = crypt.SavePrivateKeyAsPKCS8(key, constants.RootCAKeyPath)
 		 if err != nil {
 			return fmt.Errorf("Root CA setup: %v", err)
 		}
-		err = crypt.SavePemCert(cert, ca.RootCACertFile)			
+		err = crypt.SavePemCert(cert, constants.RootCACertPath)			
 		 if err != nil {
 			return fmt.Errorf("Root CA setup: %v", err)
 		}
@@ -141,12 +139,12 @@
 	 return nil
  }
  
- func (ca RootCa) Validate(c setup.Context) error {
-	 _, err := os.Stat(ca.RootCACertFile)
+ func (ca Root_Ca) Validate(c setup.Context) error {
+	 _, err := os.Stat(constants.RootCACertPath)
 	 if os.IsNotExist(err) {
 		 return errors.New("RootCACertFile is not configured")
 	 }
-	 _, err = os.Stat(ca.RootCAKeyFile)
+	 _, err = os.Stat(constants.RootCAKeyPath)
 	 if os.IsNotExist(err) {
 		 return errors.New("RootCAKeyFile is not configured")
 	 }

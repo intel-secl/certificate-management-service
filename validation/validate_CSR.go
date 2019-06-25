@@ -7,7 +7,6 @@ package validation
 import (
 	"crypto/x509"
 	"errors"
-	"strings"
 
 	"intel/isecl/cms/config"
 
@@ -44,6 +43,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csrBase64Bytes []byt
 		return errors.New("Failed to parse CSR")
 	}
 
+	/* Validate from token roles
 	for index, commonName := range strings.Split(conf.WhitelistedCN, ",") {
 		if csr.Subject.CommonName == commonName {
 			break
@@ -53,7 +53,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csrBase64Bytes []byt
 		}
 
 	}
-
+   */
 	if csr.SignatureAlgorithm != x509.SHA384WithRSA {
 		log.Errorf("Incorrect Signature Algorithm used (should be SHA 384 with RSA): %v", csr.SignatureAlgorithm)
 		return errors.New("Incorrect Signature Algorithm used (should be SHA 384 with RSA)")

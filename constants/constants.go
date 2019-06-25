@@ -37,7 +37,6 @@ const (
 	DefaultSSLCertFilePath        = ConfigDir + "cms_cert.pem"
 	DefaultRootCACommonName       = "CMSCA"
 	DefaultPort                   = 8443
-	DefaultWhitelistedCN          = "CMS,AAS"
 	DefaultOrganization           = "INTEL"
 	DefaultCountry                = "US"
 	DefaultProvince               = "CA"

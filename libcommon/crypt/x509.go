@@ -264,8 +264,7 @@ func SavePemCertWithShortSha1FileName(certPem []byte, dir string) error {
 		return fmt.Errorf("failed to parse certificate PEM")
 	}
 	// open file with restricted permissions
-	filePath := filepath.Join(dir, sha1Hex[:9])
-	//filePath := filepath.Join(dir, sha1Hex[:9] + ".pem")
+	filePath := filepath.Join(dir, sha1Hex[:9] + ".pem")
 	
 	if err := SavePemCert(block.Bytes, filePath); err != nil {
 		return err
