@@ -26,7 +26,7 @@
  }
 
  
- func createCmsAuthToken(at Cms_Auth_Token) ( err error) { 	 
+ func createCmsAuthToken(at Cms_Auth_Token, c setup.Context) ( err error) { 	 
 	cert, key, err := crypt.CreateKeyPairAndCertificate("CMS JWT Signing", "", at.Config.KeyAlgorithm, at.Config.KeyAlgorithmLength)
 	if err != nil {
 	   return err
@@ -47,7 +47,25 @@
 		 fmt.Println(err)
 		 return err
 	 }
-	 ur := []ct.RoleInfo {ct.RoleInfo{"CMS","CertificateRequester","CN:AAS"}}
+	 at.Config.AasJwtCn, err = c.GetenvString("AAS_JWT_CN", "Authentication and Authorization JWT Common Name")
+	if err != nil {
+		at.Config.AasJwtCn = constants.DefaultAasJwtCn
+	} 
+
+	at.Config.AasTlsCn, err = c.GetenvString("AAS_TLS_CN", "Authentication and Authorization TLS Common Name")
+	if err != nil {
+		at.Config.AasTlsCn = constants.DefaultAasTlsCn
+	} 
+
+	at.Config.AasTlsSan, err = c.GetenvString("AAS_TLS_SAN", "Authentication and Authorization TLS SAN list")
+	if err != nil {
+		at.Config.AasTlsSan = constants.DefaultAasTlsSan
+	} 
+
+	 ur := []ct.RoleInfo {
+		 ct.RoleInfo{"CMS",constants.CertApproverGroupName,"CN=" + at.Config.AasJwtCn}, 
+		 ct.RoleInfo{"CMS",constants.CertApproverGroupName,"CN=" + at.Config.AasTlsCn + ";SAN=" + at.Config.AasTlsSan},
+		}
 	 claims := ct.RoleSlice{ur}
 	 jwt, err := factory.Create(&claims,"CMS JWT Token", 0)
 	 if err != nil {
@@ -68,7 +86,7 @@
 		 return err
 	 }
 	 if *force || at.Validate(c) != nil {
-		 err := createCmsAuthToken(at)
+		 err := createCmsAuthToken(at, c)
 		 if err != nil {
 			 return fmt.Errorf("auth token setup: %v", err)
 		 }

@@ -14,6 +14,7 @@
 	 "intel/isecl/lib/common/setup"
 	 "intel/isecl/lib/common/validation"
 	 "intel/isecl/cms/libcommon/crypt"
+	 "intel/isecl/cms/libcommon/cms"
 	 "intel/isecl/cms/config"
 	 "intel/isecl/cms/constants"
 	 "intel/isecl/cms/utils"

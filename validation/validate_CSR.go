@@ -8,13 +8,15 @@ import (
 	"crypto/x509"
 	"errors"
 
+	"strings"
 	"intel/isecl/cms/config"
-
+	"intel/isecl/authservice/libcommon/types"
 	log "github.com/sirupsen/logrus"
 )
 
 //ValidateCertificateRequest is used to validate the Certificate Signing Request
-func ValidateCertificateRequest(conf *config.Configuration, csrBase64Bytes []byte) error {
+func ValidateCertificateRequest(conf *config.Configuration, csr *x509.CertificateRequest,
+	 ctxMap *map[string]*types.RoleInfo) error {
 	//var csrBytes []byte
 	oidExtensionBasicConstraints := []int{2, 5, 29, 19}
 	oidExtensionKeyUsage := []int{2, 5, 29, 15}
@@ -37,27 +39,40 @@ func ValidateCertificateRequest(conf *config.Configuration, csrBase64Bytes []byt
 	foundKeyUsage := false
 	noOfLoops := 0
 
-	csr, err := x509.ParseCertificateRequest(csrBase64Bytes)
-	if err != nil {
-		log.Errorf("Failed to parse CSR: %s", err)
-		return errors.New("Failed to parse CSR")
-	}
-
-	/* Validate from token roles
-	for index, commonName := range strings.Split(conf.WhitelistedCN, ",") {
-		if csr.Subject.CommonName == commonName {
-			break
-		}else if index == len(strings.Split(conf.WhitelistedCN, ",")) - 1 {
-			log.Errorf("Common name is not whitelisted: %v", csr.Subject.CommonName)
-			return errors.New("Common name is not whitelisted")
-		}
-
-	}
-   */
 	if csr.SignatureAlgorithm != x509.SHA384WithRSA {
 		log.Errorf("Incorrect Signature Algorithm used (should be SHA 384 with RSA): %v", csr.SignatureAlgorithm)
 		return errors.New("Incorrect Signature Algorithm used (should be SHA 384 with RSA)")
 	}
+
+	// Validate CN
+	cnSanMapFromToken := make(map[string]string)
+	for k,_  := range *ctxMap {
+		cnSans := strings.Split(k, ";")		
+		if len(cnSans) < 2 {
+			cnSanMapFromToken[cnSans[0]] = ""		
+		} else {
+			cnSanMapFromToken[cnSans[0]] = cnSans[1]		
+		}
+	}
+	subjectsFromCsr := strings.Split(csr.Subject.String(), ",")
+	subjectFromCsr := ""
+	for _,sub := range subjectsFromCsr {
+		log.Info(sub);
+		if strings.Contains(sub, "CN=") {
+			subjectFromCsr = sub			
+			break
+		}
+	}
+	
+	if sanlistFromToken, ok := cnSanMapFromToken[subjectFromCsr]; ok {
+		log.Info("Got valid Common Name in CSR : " + csr.Subject.String())		
+		log.Info(sanlistFromToken)
+	} else {
+		log.Errorf("No role associated with provided Common Name in CSR")		
+		return errors.New("No role associated with provided Common Name in CSR")
+	}
+
+	// Validate SAN list
 
 	for _, extension := range csr.Extensions {
 		if extension.Id.Equal(oidExtensionBasicConstraints) {

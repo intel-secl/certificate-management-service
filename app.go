@@ -27,7 +27,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"intel/isecl/cms/middleware"
+	"intel/isecl/authservice/libcommon/middleware"
 
 	stdlog "log"
 
@@ -294,7 +294,7 @@ func (a *App) startServer() error {
 	}(resource.SetVersion, resource.SetCACertificates)
 
 	sr = r.PathPrefix("/cms/v1/certificates").Subrouter()
-	sr.Use(middleware.NewTokenAuth(constants.TrustedJWTSigningCertsDir))	
+	sr.Use(middleware.NewTokenAuth(constants.TrustedJWTSigningCertsDir, ""))	
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
 			s(sr,c)

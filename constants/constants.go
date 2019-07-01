@@ -7,6 +7,7 @@ package constants
 import "crypto"
 
 const (
+	ServiceName                   = "CMS"
 	HomeDir                       = "/opt/cms/"
 	ConfigDir                     = "/etc/cms/"
 	ExecutableDir                 = "/opt/cms/bin/"
@@ -44,6 +45,10 @@ const (
 	DefaultCACertValidiy          = 5
 	DefaultKeyAlgorithm           = "rsa"
 	DefaultKeyAlgorithmLength     = 3072
+	CertApproverGroupName         = "CertApprover"
+	DefaultAasJwtCn               = "AAS JWT Signing Certificate"	
+	DefaultAasTlsCn               = "AAS TLS Certificate"
+	DefaultAasTlsSan              = "127.0.0.1,localhost"
 )
 
 // State represents whether or not a daemon is running or not

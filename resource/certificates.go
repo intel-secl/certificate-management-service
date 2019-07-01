@@ -4,7 +4,7 @@
  */
  package resource
 
-import (
+import (	
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -19,6 +19,9 @@ import (
 	"net/http"
 	"time"
 	"github.com/gorilla/mux"
+	"intel/isecl/authservice/libcommon/context"
+	ct "intel/isecl/authservice/libcommon/types"
+	"intel/isecl/authservice/libcommon/auth"	
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,7 +33,23 @@ func SetCertificates(router *mux.Router, config *config.Configuration) {
 }
 
 //GetCertificates is used to get the JWT Signing/TLS certificate upon JWT valildation
-func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, config *config.Configuration) {		
+func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, config *config.Configuration) {	
+	privileges, err := context.GetUserRoles(httpRequest)
+	if err != nil {
+		httpWriter.WriteHeader(http.StatusInternalServerError)
+		httpWriter.Write([]byte("Could not get user roles from http context"))
+		return
+	}
+
+	ctxMap, foundRole := auth.ValidatePermissionAndGetRoleContext(privileges,
+		[]ct.RoleInfo{ct.RoleInfo{Service: constants.ServiceName, Name: constants.CertApproverGroupName}},
+		true)
+	if !foundRole {
+		httpWriter.WriteHeader(http.StatusUnauthorized)		
+		return
+	}
+	
+
 	if httpRequest.Header.Get("Accept") != "application/x-pem-file" || httpRequest.Header.Get("Content-Type") != "application/x-pem-file" {
 		log.Errorf("Accept type not supported")
 		httpWriter.WriteHeader(http.StatusNotAcceptable)
@@ -55,16 +74,16 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		return
 	}
 	
-	err = validation.ValidateCertificateRequest(config, pemBlock.Bytes)
-	if err != nil {
+	clientCSR, err := x509.ParseCertificateRequest(pemBlock.Bytes)
+    if err != nil {
 		log.Errorf("Invalid CSR provided: %v", err)
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		httpWriter.Write([]byte("Invalid CSR provided: " + err.Error()))
 		return
 	}
 	
-	clientCSR, err := x509.ParseCertificateRequest(pemBlock.Bytes)
-    if err != nil {
+	err = validation.ValidateCertificateRequest(config, clientCSR, ctxMap)
+	if err != nil {
 		log.Errorf("Invalid CSR provided: %v", err)
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		httpWriter.Write([]byte("Invalid CSR provided: " + err.Error()))

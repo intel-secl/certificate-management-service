@@ -32,6 +32,10 @@ type Configuration struct {
 	KeyAlgorithm           string
 	KeyAlgorithmLength     int
 
+	AasJwtCn               string
+	AasTlsCn               string
+	AasTlsSan              string
+
 	AuthDefender struct {
 		MaxAttempts         int
 		IntervalMins        int

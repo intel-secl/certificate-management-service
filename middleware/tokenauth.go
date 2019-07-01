@@ -48,27 +48,23 @@ func retrieveAndSaveTrustedJwtSigningCerts(trustedJWTSigningCertsDir string) err
 	return nil
 }
 
-func NewTokenAuth(trustedJWTSigningCertsDir string) mux.MiddlewareFunc {
-	log.Info("NewTokenAuth............")
+func NewTokenAuth(trustedJWTSigningCertsDir string) mux.MiddlewareFunc {	
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// lets start by making sure jwt token verifier is initalized
 
 		// there is a case when the jwtVerifier is not loaded with the right certificates. 
-		// In this case, we need to reattempt. So lets run this in a loop
-		log.Info("jwtVerifier initialize............")
+		// In this case, we need to reattempt. So lets run this in a loop		
 		if jwtVerifier == nil  {
 			if err := initJwtVerifier(trustedJWTSigningCertsDir); err != nil {
 				log.WithError(err).Error("not able to initialize jwt verifier.")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-		}
-		log.Info("jwtVerifier initialized............")
+		}		
 		// pull up the bearer token.
-
-		log.Info("jwtVerifier get token............")
+	
 		splitAuthHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(splitAuthHeader) <= 1 {
 			log.Error("no bearer token provided for authorization")
