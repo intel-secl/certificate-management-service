@@ -27,11 +27,7 @@
  // Should move this to lib common, as it is duplicated across CMS and TDA
  
  type TLS struct {
-	 Flags           []string	
-	 RootCAKeyFile   string
-	 RootCACertFile  string
-	 TLSKeyFile      string
-	 TLSCertFile     string
+	 Flags           []string
 	 ConsoleWriter   io.Writer
 	 Config          *config.Configuration	
  }
@@ -67,7 +63,10 @@
         SignatureAlgorithm: clientCSR.SignatureAlgorithm,
 
         PublicKeyAlgorithm: clientCSR.PublicKeyAlgorithm,
-        PublicKey:          clientCSR.PublicKey,
+		PublicKey:          clientCSR.PublicKey,
+		
+		IPAddresses:        clientCSR.IPAddresses,
+		DNSNames:           clientCSR.DNSNames,
 
         SerialNumber: serialNumber,
         Issuer:       RootCertificateTemplate.Issuer,
@@ -75,7 +74,7 @@
         NotBefore:    time.Now(),
         NotAfter:     time.Now().AddDate(1, 0, 0),
 		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-        ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+        ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 	 }
 
 	rootKeyPair, err := tls.LoadX509KeyPair(constants.RootCACertPath, constants.RootCAKeyPath)
@@ -93,11 +92,11 @@
 	 fmt.Fprintln(ts.ConsoleWriter, "Running tls setup...")
 	 fs := flag.NewFlagSet("tls", flag.ContinueOnError)
 	 force := fs.Bool("force", false, "force recreation, will overwrite any existing tls keys")
-	 defaultHostname, err := c.GetenvString("CMS_HOST_NAMES", "comma separated list of hostnames to add to TLS self signed cert")
+	 defaultHostname, err := c.GetenvString("CMS_HOST_NAMES", "comma separated list of hostnames to add to TLS certificate")
 	 if err != nil {
 		 defaultHostname, _ = outboundHost()
 	 }
-	 host := fs.String("host_names", defaultHostname, "comma separated list of hostnames to add to TLS self signed cert")
+	 host := fs.String("host_names", defaultHostname, "comma separated list of hostnames to add to TLS certificate")
  
 	 err = fs.Parse(ts.Flags)
 	 if err != nil {
@@ -134,7 +133,7 @@
 	 }
 	 return nil
  }
- 
+
  func (ts TLS) Validate(c setup.Context) error {	 
 	fmt.Fprintln(ts.ConsoleWriter, "Validating tls setup...")
 	 _, err := os.Stat(constants.TLSCertPath)

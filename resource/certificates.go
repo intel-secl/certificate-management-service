@@ -104,13 +104,16 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
         PublicKeyAlgorithm: clientCSR.PublicKeyAlgorithm,
 		PublicKey:          clientCSR.PublicKey,
 		
+        IPAddresses:        clientCSR.IPAddresses,
+		DNSNames:           clientCSR.DNSNames,
+				
 		SerialNumber: serialNumber,
         Issuer:       tasks.RootCertificateTemplate.Issuer,
         Subject:      clientCSR.Subject,
         NotBefore:    time.Now(),
         NotAfter:     time.Now().AddDate(1, 0, 0),
         KeyUsage:     x509.KeyUsageDigitalSignature,
-        ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+        ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 	 }
 
 	for _, extension := range clientCSR.Extensions {

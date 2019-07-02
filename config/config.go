@@ -31,6 +31,7 @@ type Configuration struct {
 	Country                string
 	KeyAlgorithm           string
 	KeyAlgorithmLength     int
+	RootCACertDigest       string
 
 	AasJwtCn               string
 	AasTlsCn               string

@@ -18,6 +18,7 @@
 	 "intel/isecl/cms/constants"
 	 "intel/isecl/cms/libcommon/crypt"
 	 "io"
+	 "io/ioutil"
 	 "math/big"	 
 	 "os"
 	 "time"	 
@@ -133,6 +134,18 @@
 		 if err != nil {
 			return fmt.Errorf("Root CA setup: %v", err)
 		}
+
+		//store SHA384 of ROOT CA for further use
+		rootCACertificateBytes, err := ioutil.ReadFile(constants.RootCACertPath)
+		if err != nil {
+			return fmt.Errorf("Root CA setup: %v", err)
+		}
+		caDigest, err := crypt.GetCertHashFromPemInHex(rootCACertificateBytes, crypto.SHA384)
+		if err != nil {
+			return fmt.Errorf("Root CA setup: %v", err)
+		}
+		ca.Config.RootCACertDigest = caDigest
+		fmt.Println("Root CA Certificate Digest : ", caDigest)
 	 } else {
 		 fmt.Println("Root CA already configured, skipping")
 	 }
@@ -140,7 +153,7 @@
  }
  
  func (ca Root_Ca) Validate(c setup.Context) error {
-	 _, err := os.Stat(constants.RootCACertPath)
+	 _, err := os.Stat(constants.RootCACertPath)	 
 	 if os.IsNotExist(err) {
 		 return errors.New("RootCACertFile is not configured")
 	 }
