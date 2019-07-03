@@ -53,6 +53,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 		} else {
 			cnSanMapFromToken[cnSans[0]] = cnSans[1]		
 		}
+		log.Info("Common Name in Token : " + cnSans[0])		
 	}
 	subjectsFromCsr := strings.Split(csr.Subject.String(), ",")
 	subjectFromCsr := ""
@@ -64,6 +65,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 		}
 	}
 	
+	log.Info("Common Name in CSR : " + csr.Subject.String())		
 	if sanlistFromToken, ok := cnSanMapFromToken[subjectFromCsr]; ok {
 		log.Info("Got valid Common Name in CSR : " + csr.Subject.String())		
 		log.Info(sanlistFromToken)
@@ -93,16 +95,17 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 			}
 		}
 	}
+	// TODO: Enable validation
 	if !foundBasicConstraints {
 		log.Errorf("Basic constraints extension not found in CSR")
-		return errors.New("Basic constraints extension not found in CSR")
+		//return errors.New("Basic constraints extension not found in CSR")
 	}
 	if !foundKeyUsage {
 		log.Errorf("Key Usage extension not found in CSR")
-		return errors.New("Key Usage extension not found in CSR")
+		//return errors.New("Key Usage extension not found in CSR")
 	} else if noOfLoops == len(validKeyUsageValue) {
 		log.Errorf("Valid key usage not found in CSR")
-		return errors.New("Valid key usage not found in CSR")
+		//return errors.New("Valid key usage not found in CSR")
 	}
 	return nil
 }

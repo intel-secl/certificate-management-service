@@ -90,8 +90,8 @@ func CreateKeyPairAndCertificateRequest(subject, hostList, keyType string, keyLe
 
 	template := x509.CertificateRequest{
 		Subject: pkix.Name{
-			Organization: []string{subject},
-		},
+			CommonName: subject,
+		},		
 	}
 	template.SignatureAlgorithm, err = GetSignatureAlgorithm(pubKey)
 	if err != nil {
