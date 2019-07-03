@@ -5,7 +5,6 @@
 package setup
 
 import (
-        "crypto"
         "fmt"
         "flag"
         "io"
@@ -25,7 +24,7 @@ type Download_Ca_Cert struct {
 	ConsoleWriter   io.Writer
 }
 
-func DownloadRootCaCertificate(cmsBaseUrl string, dirPath string, trustDigest string) (err error) {        
+func DownloadRootCaCertificate(cmsBaseUrl string, dirPath string) (err error) {        
         url, err := url.Parse(cmsBaseUrl)
         if err != nil {
                 fmt.Println("Configured CMS URL is malformed: ", err)
@@ -64,14 +63,6 @@ func DownloadRootCaCertificate(cmsBaseUrl string, dirPath string, trustDigest st
                 return fmt.Errorf("CA certificate setup: %v", err)
         }        
         if tlsResp != nil {
-                caDigest, err := crypt.GetCertHashFromPemInHex(tlsResp, crypto.SHA384)
-                if err != nil {
-                        fmt.Println("Could not find certificate digest")
-                        return fmt.Errorf("CA certificate setup: %v", err)
-                } else if trustDigest != caDigest {                        
-                        fmt.Println("Digest does not match, untrusted CA " )
-                        return fmt.Errorf("CA certificate setup: %v", err)
-                } 
                 err = crypt.SavePemCertWithShortSha1FileName(tlsResp, dirPath)
                 if err != nil {
                         fmt.Println("Could not save CA certificate")
@@ -99,14 +90,9 @@ func (cc Download_Ca_Cert) Run(c setup.Context) error {
                 fmt.Println("CMS_BASE_URL not found in environment for Download CA Certificate") 
                 return fmt.Errorf("CMS_BASE_URL not found in environment for Download CA Certificate") 
          }
-         caCertTrustedDigest, err := c.GetenvString("CA_CERT_DIGEST", "Trusted CMS CA certificate SHA384 digest")
-	 if err != nil || caCertTrustedDigest == "" {
-                fmt.Println("CA_CERT_DIGEST not found in environment for Download CA Certificate") 
-                return fmt.Errorf("CA_CERT_DIGEST not found in environment for Download CA Certificate") 
-         }
 
         if *force || cc.Validate(c) != nil {
-                err = DownloadRootCaCertificate(cmsBaseUrl, cc.CaCertDirPath, caCertTrustedDigest)
+                err = DownloadRootCaCertificate(cmsBaseUrl, cc.CaCertDirPath)
                 if err != nil {
                         fmt.Println("Failed to Download CA Certificate") 
                         return err
