@@ -108,12 +108,12 @@
 		host := fs.String("host_names", defaultHostname, "Comma separated list of hostnames to add to Certificate")
  
 		bearerToken := tc.BearerToken
-		tokenFromEnv, err := c.GetenvString("CMS_BEARER_TOKEN", "CMS bearer token")
+		tokenFromEnv, err := c.GetenvString("BEARER_TOKEN", "bearer token")
 	    if err == nil {
 			bearerToken = tokenFromEnv
 		}
 		if bearerToken == "" {			
-			return errors.New("Certificate setup: CMS_BEARER_TOKEN not found in environment for Download Certificate") 
+			return errors.New("Certificate setup: BEARER_TOKEN not found in environment for Download Certificate") 
 		}
  
 		 if *force || tc.Validate(c) != nil {
