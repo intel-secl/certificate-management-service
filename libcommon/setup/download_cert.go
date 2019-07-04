@@ -50,7 +50,6 @@
    certificates, _ := url.Parse("certificates")
    endpoint := url.ResolveReference(certificates)
    csrPemBytes := pem.EncodeToMemory(&pem.Block{Type: "BEGIN CERTIFICATE REQUEST", Bytes: csrData})
-   _ = ioutil.WriteFile("/opt/cms/csr.pem", csrPemBytes, 0660)
    req, err := http.NewRequest("POST", endpoint.String(),  bytes.NewBuffer(csrPemBytes))
    if err != nil {
 		   fmt.Println("Failed to instantiate http request to CMS")
