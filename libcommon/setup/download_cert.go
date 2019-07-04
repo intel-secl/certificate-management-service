@@ -22,28 +22,30 @@
 		 "intel/isecl/lib/common/setup"
  )
  
- type Download_Tls_Cert struct {
+ type Download_Cert struct {
 		 Flags              []string
-		 TLSKeyFile         string     
-		 TLSCertFile        string 
+		 KeyFile            string     
+		 CertFile           string 
 		 KeyAlgorithm       string
 		 KeyAlgorithmLength int
 		 CommonName         string
 		 SanList            string
+		 CertType           string
 		 BearerToken        string
 	     ConsoleWriter      io.Writer
  }
 
- func createTLSCert(tc Download_Tls_Cert, cmsBaseUrl string, commonName string, hosts string, bearerToken string) (key []byte, cert []byte, err error) {	
+ func createCertificate(tc Download_Cert, cmsBaseUrl string, commonName string, hosts string, bearerToken string) (key []byte, cert []byte, err error) {
+	 //TODO: use CertType for TLS or Signing cert	
 	csrData, key, err := crypt.CreateKeyPairAndCertificateRequest(commonName, hosts, tc.KeyAlgorithm, tc.KeyAlgorithmLength)
 	if err != nil {
-	   return nil, nil, fmt.Errorf("TLS certificate setup: %v", err)
+	   return nil, nil, fmt.Errorf("Certificate setup: %v", err)
 	}	
 
    url, err := url.Parse(cmsBaseUrl)
    if err != nil {
 		   fmt.Println("Configured CMS URL is malformed: ", err)
-		   return nil, nil, fmt.Errorf("TLS certificate setup: %v", err)
+		   return nil, nil, fmt.Errorf("Certificate setup: %v", err)
    }
    certificates, _ := url.Parse("certificates")
    endpoint := url.ResolveReference(certificates)
@@ -52,7 +54,7 @@
    req, err := http.NewRequest("POST", endpoint.String(),  bytes.NewBuffer(csrPemBytes))
    if err != nil {
 		   fmt.Println("Failed to instantiate http request to CMS")
-		   return nil, nil, fmt.Errorf("TLS certificate setup: %v", err)
+		   return nil, nil, fmt.Errorf("Certificate setup: %v", err)
    }
    req.Header.Set("Accept", "application/x-pem-file")        
    req.Header.Set("Content-Type", "application/x-pem-file")      
@@ -68,42 +70,42 @@
    resp, err := client.Do(req)
    if err != nil {
 		   fmt.Println("Failed to perform HTTP request to CMS")
-		   return nil, nil, fmt.Errorf("TLS certificate setup: %v", err)
+		   return nil, nil, fmt.Errorf("Certificate setup: %v", err)
    }
    defer resp.Body.Close()
    if resp.StatusCode != http.StatusOK {
 		   text, _ := ioutil.ReadAll(resp.Body)
-		   errStr := fmt.Sprintf("CMS request failed to download TLS certificate (HTTP Status Code: %d)\nMessage: %s", resp.StatusCode, string(text))
+		   errStr := fmt.Sprintf("CMS request failed to download Certificate (HTTP Status Code: %d)\nMessage: %s", resp.StatusCode, string(text))
 		   fmt.Println(errStr)
-		   return nil, nil, fmt.Errorf("TLS certificate setup: %v", err)
+		   return nil, nil, fmt.Errorf("Certificate setup: %v", err)
    }
    cert, err = ioutil.ReadAll(resp.Body)
    if err != nil {
 		   fmt.Println("Failed to read CMS response body")
-		   return nil, nil, fmt.Errorf("TLS certificate setup: %v", err)
+		   return nil, nil, fmt.Errorf("Certificate setup: %v", err)
    }   
 	return
 }
  
- func (tc Download_Tls_Cert) Run(c setup.Context) error {
-		 fmt.Fprintln(tc.ConsoleWriter, "Running TLS certificate download setup...")
-		 fs := flag.NewFlagSet("tls", flag.ContinueOnError)
+ func (tc Download_Cert) Run(c setup.Context) error {
+		 fmt.Fprintln(tc.ConsoleWriter, "Running Certificate download setup...")
+		 fs := flag.NewFlagSet("cert", flag.ContinueOnError)
 		 force := fs.Bool("force", false, "force recreation, will overwrite any existing certificate")
 		 
 		 err := fs.Parse(tc.Flags)
 		 if err != nil {				 
-				 return errors.New("TLS certificate setup: Unable to parse flags") 
+				 return errors.New("Certificate setup: Unable to parse flags") 
 		 }
 		 cmsBaseUrl, err := c.GetenvString("CMS_BASE_URL", "CMS base URL in https://{{cms}}:{{cms_port}}/cms/v1/")
 	     if err != nil || cmsBaseUrl == "" {			     
-				 return errors.New("TLS certificate setup: CMS_BASE_URL not found in environment for Download TLS Certificate") 
+				 return errors.New("Certificate setup: CMS_BASE_URL not found in environment for Download Certificate") 
 		 }
 
-		defaultHostname, err := c.GetenvString("TLS_HOST_NAMES", "Comma separated list of hostnames to add to TLS certificate")
+		defaultHostname, err := c.GetenvString("SAN_LIST", "Comma separated list of hostnames to add to Certificate")
 		if err != nil {
 			defaultHostname = tc.SanList
 		}
-		host := fs.String("host_names", defaultHostname, "Comma separated list of hostnames to add to TLS certificate")
+		host := fs.String("host_names", defaultHostname, "Comma separated list of hostnames to add to Certificate")
  
 		bearerToken := tc.BearerToken
 		tokenFromEnv, err := c.GetenvString("CMS_BEARER_TOKEN", "CMS bearer token")
@@ -111,12 +113,12 @@
 			bearerToken = tokenFromEnv
 		}
 		if bearerToken == "" {			
-			return errors.New("TLS certificate setup: CMS_BEARER_TOKEN not found in environment for Download TLS Certificate") 
+			return errors.New("Certificate setup: CMS_BEARER_TOKEN not found in environment for Download Certificate") 
 		}
  
 		 if *force || tc.Validate(c) != nil {
 			if *host == "" {
-				return errors.New("TLS certificate setup: no SAN hostnames specified")
+				return errors.New("Certificate setup: no SAN hostnames specified")
 			}
 			hosts := strings.Split(*host, ",")
 	
@@ -127,34 +129,34 @@
 					return valid_err
 				}
 			}
-			key, cert, err := createTLSCert(tc, cmsBaseUrl, tc.CommonName, *host, bearerToken)
+			key, cert, err := createCertificate(tc, cmsBaseUrl, tc.CommonName, *host, bearerToken)
 			if err != nil {
-				return fmt.Errorf("TLS certificate setup: %v", err)
+				return fmt.Errorf("Certificate setup: %v", err)
 			}
-			err = crypt.SavePrivateKeyAsPKCS8(key, tc.TLSKeyFile)
+			err = crypt.SavePrivateKeyAsPKCS8(key, tc.KeyFile)
 			if err != nil {
-				return fmt.Errorf("TLS certificate setup: %v", err)
+				return fmt.Errorf("Certificate setup: %v", err)
 			} 
-			err = ioutil.WriteFile(tc.TLSCertFile, cert, 0660)
+			err = ioutil.WriteFile(tc.CertFile, cert, 0660)
 			if err != nil {
-				fmt.Println("Could not store TLS certificate")
-				return fmt.Errorf("TLS certificate setup: %v", err)
+				fmt.Println("Could not store Certificate")
+				return fmt.Errorf("Certificate setup: %v", err)
 			}
 		 } else {
-				 fmt.Println("TLS certificate already downloaded, skipping")
+				 fmt.Println("Certificate already downloaded, skipping")
 		 }           
 		  return nil  
  }
  
- func (tc Download_Tls_Cert) Validate(c setup.Context) error {	 
-	fmt.Fprintln(tc.ConsoleWriter, "Validating TLS certificate download setup...")	
-	 _, err := os.Stat(tc.TLSCertFile)
+ func (tc Download_Cert) Validate(c setup.Context) error {	 
+	fmt.Fprintln(tc.ConsoleWriter, "Validating Certificate download setup...")	
+	 _, err := os.Stat(tc.CertFile)
 	 if os.IsNotExist(err) {
-		 return errors.New("TLSCertFile is not configured")
+		 return errors.New("CertFile is not configured")
 	 }
-	 _, err = os.Stat(tc.TLSKeyFile)
+	 _, err = os.Stat(tc.KeyFile)
 	 if os.IsNotExist(err) {
-		 return errors.New("TLSKeyFile is not configured")
+		 return errors.New("KeyFile is not configured")
 	 }
 	 return nil
   }
