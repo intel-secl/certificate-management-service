@@ -6,7 +6,6 @@
 
  import (
 		 "fmt"
-		 "net"
 		 "flag"
 		 "io"
 		 "os"
@@ -29,20 +28,11 @@
 		 TLSCertFile        string 
 		 KeyAlgorithm       string
 		 KeyAlgorithmLength int
-		 CommonName        string
+		 CommonName         string
+		 SanList            string
 		 BearerToken        string
 	     ConsoleWriter      io.Writer
  }
-
- func outboundHost() (string, error) {
-	conn, err := net.Dial("udp", "1.1.1.1:80")
-	if err != nil {
-		return os.Hostname()
-	}
-	defer conn.Close()
-
-	return (conn.LocalAddr().(*net.UDPAddr)).IP.String(), nil
-}
 
  func createTLSCert(tc Download_Tls_Cert, cmsBaseUrl string, commonName string, hosts string, bearerToken string) (key []byte, cert []byte, err error) {	
 	csrData, key, err := crypt.CreateKeyPairAndCertificateRequest(commonName, hosts, tc.KeyAlgorithm, tc.KeyAlgorithmLength)
@@ -111,8 +101,7 @@
 
 		defaultHostname, err := c.GetenvString("TLS_HOST_NAMES", "Comma separated list of hostnames to add to TLS certificate")
 		if err != nil {
-			defaultHostname, _ = outboundHost()
-			defaultHostname = "127.0.0.1,10.105.167.142"
+			defaultHostname = tc.SanList
 		}
 		host := fs.String("host_names", defaultHostname, "Comma separated list of hostnames to add to TLS certificate")
  
