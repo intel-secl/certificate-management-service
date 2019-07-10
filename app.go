@@ -27,7 +27,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"intel/isecl/authservice/libcommon/middleware"
+	"intel/isecl/lib/common/middleware"
 
 	stdlog "log"
 
@@ -281,6 +281,11 @@ func (a *App) Run(args []string) error {
 	return nil
 }
 
+func (a *App) RetrieveJWTSigningCerts() error {
+	fmt.Println("TODO: implement the function to retrieve JWT signing certificate")
+	return nil
+}
+
 func (a *App) startServer() error {
 	c := a.configuration()
 
@@ -294,7 +299,7 @@ func (a *App) startServer() error {
 	}(resource.SetVersion, resource.SetCACertificates)
 
 	sr = r.PathPrefix("/cms/v1/certificates").Subrouter()
-	sr.Use(middleware.NewTokenAuth(constants.TrustedJWTSigningCertsDir, ""))	
+	sr.Use(middleware.NewTokenAuth(constants.TrustedJWTSigningCertsDir, constants.ConfigDir, a.RetrieveJWTSigningCerts))
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
 			s(sr,c)

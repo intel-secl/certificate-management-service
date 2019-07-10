@@ -19,9 +19,9 @@ import (
 	"net/http"
 	"time"
 	"github.com/gorilla/mux"
-	"intel/isecl/authservice/libcommon/context"
-	ct "intel/isecl/authservice/libcommon/types"
-	"intel/isecl/authservice/libcommon/auth"	
+	"intel/isecl/lib/common/context"
+	ct "intel/isecl/lib/common/types/aas"
+	"intel/isecl/lib/common/auth"
 	log "github.com/sirupsen/logrus"
 )
 

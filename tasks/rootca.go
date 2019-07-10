@@ -16,7 +16,7 @@
 	 "intel/isecl/cms/utils"
 	 "intel/isecl/cms/config"
 	 "intel/isecl/cms/constants"
-	 "intel/isecl/cms/libcommon/crypt"
+	 "intel/isecl/lib/common/crypt"
 	 "io"
 	 "io/ioutil"
 	 "math/big"	 

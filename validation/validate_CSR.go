@@ -10,7 +10,7 @@ import (
 
 	"strings"
 	"intel/isecl/cms/config"
-	"intel/isecl/authservice/libcommon/types"
+	types "intel/isecl/lib/common/types/aas"
 	log "github.com/sirupsen/logrus"
 )
 

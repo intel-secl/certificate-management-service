@@ -9,14 +9,14 @@
 	 "flag"
 	 "fmt"
 	 "intel/isecl/lib/common/setup"
-	 "intel/isecl/cms/libcommon/crypt"
+	 "intel/isecl/lib/common/crypt"
 	 "intel/isecl/cms/config"
 	 "intel/isecl/cms/constants"
 	 "io"
 	 "os"
 	 "encoding/pem"
-	 jwtauth "intel/isecl/authservice/libcommon/jwt"
-	 ct "intel/isecl/authservice/libcommon/types"
+	 jwtauth "intel/isecl/lib/common/jwt"
+	 ct "intel/isecl/lib/common/types/aas"
  )
  
  type Cms_Auth_Token struct {

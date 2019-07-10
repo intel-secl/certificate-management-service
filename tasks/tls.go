@@ -13,7 +13,7 @@
 	 "fmt"
 	 "intel/isecl/lib/common/setup"
 	 "intel/isecl/lib/common/validation"
-	 "intel/isecl/cms/libcommon/crypt"
+	 "intel/isecl/lib/common/crypt"
 	 "intel/isecl/cms/config"
 	 "intel/isecl/cms/constants"
 	 "intel/isecl/cms/utils"
