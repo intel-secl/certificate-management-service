@@ -62,7 +62,7 @@
 		certValidity = constants.DefaultCACertValidiy
 	}
 	RootCertificateTemplate.NotAfter = time.Now().AddDate(certValidity, 0, 0)
-	
+	/*
 	if ca.Config.Organization != "" {
 		RootCertificateTemplate.Subject.Organization = append(RootCertificateTemplate.Subject.Organization, ca.Config.Organization)
 	} else {
@@ -85,7 +85,7 @@
 		RootCertificateTemplate.Subject.Locality = append(RootCertificateTemplate.Subject.Locality, ca.Config.Locality)
 	} else {
 		RootCertificateTemplate.Subject.Locality = append(RootCertificateTemplate.Subject.Locality, constants.DefaultLocality)
-	}
+	}*/
 	return RootCertificateTemplate, err
 }
 
