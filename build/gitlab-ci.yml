@@ -48,7 +48,7 @@ installer:
   script:
     - apt-get update && apt-get install -y makeself
     - make installer
-    - cp ./doc/swagger.yml ./out/swagger.yml
+    - cp ./docs/swagger.yml ./out/swagger.yml
   artifacts:
     paths:
       - "out/cms-*.bin"
@@ -64,7 +64,7 @@ docker:
     - curl -sSL https://get.docker.com/ | sh
     - apt-get update && apt-get install -y makeself
     - make docker
-    - cp ./doc/swagger.yml ./out/swagger.yml    
+    - cp ./docs/swagger.yml ./out/swagger.yml    
     - cp ./dist/docker/docker-compose.yml ./out/docker-compose.yml
   artifacts:
     paths:
@@ -80,7 +80,7 @@ lld:
     - go
   script:
     - apt update && apt install -y pandoc
-    - pandoc --standalone --css pandoc.css -f markdown_github -t html5 doc/LLD.md -o LLD.html
+    - pandoc --standalone --css pandoc.css -f markdown_github -t html5 docs/LLD.md -o LLD.html
   artifacts:
     paths:
       - LLD.html
