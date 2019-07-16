@@ -1,3 +1,4 @@
+
 # Certificate Management Service Low Level Documentation
 
 ## Acronyms
@@ -14,9 +15,8 @@ The `Certificate Management Service` has following core functionalities:
 
 ## Root CA certificates
 
-### GET `/cms/ca-certificates`
+### GET `/cms/v1/ca-certificates`
 Retrieve the root CA Certificate configured in CMS
-- Authorization: `HTTP Basic Authentication`
 - Content-Type: `application/x-pem-file`
 
 Example Response:
@@ -46,17 +46,12 @@ UMuRV7NUwYbn003sVkKvvdYm8dTSkjfAm6W6Lhn2idRX5O5k4KCgT4I535ae6aHq
 MYVYqMHd9AuoWtyd1yATQppyTBbPrrgj5wI2TUMNNmk5JGIN6WQ=
 -----END CERTIFICATE-----
 ```
-Error Responses:
-```
-401: Unauthorized - Missing or invalid token
-403: Forbidden    - Bearer token does contain the required role for the request
-```
 ## Certificates
-### POST `/cms/certificates`
+### POST `/cms/v1/certificates`
 
 Signs certificates for the requested CSR
 
-- Authorization: `HTTP Basic Authentication`
+- Authorization: `JWT Token`
 - Content-Type: `application/x-pem-file`
 - Accept: `application/x-pem-file`
 ```pem
@@ -121,12 +116,28 @@ As a user, I want to download Root CA certificate from CMS.
 ### Get CSR signed from root CA 
 As a user, I want to get my TLS/JWT CSR signed from CMS. 
 
-
 ### Recreate Root CA certificate
 As an administrator, I want to create or recreate Root CA certificate of CMS.
 
 ### Recreate TLS certificate
-A an administrator, I want to create or recreate TLS certificate of CMS.
+As an administrator, I want to create or recreate TLS certificate of CMS.
+
+### Recreate Authentication Token
+As an administrator, I want to create or recreate Authentication token for CMS.
+
+## Integration User Stories
+### AAS Download TLS certificate using setup Auth Token
+As an administrator, I want to download TLS certificate from CMS while installation of AAS or using setup command, using Authentication Token provided by CMS at setup
+
+### WLS Download Root CA certificate
+As an administrator, I want to download Root CA certificate from CMS while installation of WLS or using setup command
+
+### WLS Download TLS certificate
+As an administrator, I want to download TLS certificate from CMS while installation of WLS or using setup command
+
+### WLA Download Root CA certificate
+As an administrator, I want to download Root CA certificate from CMS while installation of WLA or using setup command
+
 
 # Certificate Management Service Installaton
 
@@ -144,10 +155,10 @@ The daemon will create and use the following files on the OS:
 3. /var/lib/cms/* (misc files)
 4. /etc/cms/config.yml (Configuration)
 5. /usr/\*/bin/cms(executable binary)
-6. /var/lib/cms/root-ca.key (Root CA key)
-7. /var/lib/cms/root-ca.crt (Root CA cert)
-8. /var/lib/cms/tls.key (TLS key)
-9. /var/lib/cms/tls.crt (TLS cert)
+6. /var/lib/cms/root-ca-key.pem (Root CA key)
+7. /var/lib/cms/root-ca-cert.pem (Root CA cert)
+8. /var/lib/cms/tls-key.pem (TLS key)
+9. /var/lib/cms/tls-cert.pem (TLS cert)
 
 ## Container Installation
 
@@ -167,15 +178,16 @@ The authenticaiton defender is a designed to thwart disctionary based attacks by
 ## Setup
 
 Available setup tasks:
-- root-ca
+- root_ca
 - tls
+- cms_auth_token
 - all
 
 
 ### Setup - Root CA
 
 ```bash
-> cms setup root-ca [--force]
+> cms setup root_ca [--force]
 ```
 This command can be used to generate key pairs for root CA and create the self-signed root CA certificates. ‘--force’ parameter will force to regenerate key pairs/certificates and replace if already present.
 
@@ -199,6 +211,19 @@ Command implementation details–
  2. generate TLS certificate
  3. store root key pair in config directory
  4. store TLS certificate in in config directory
+
+### Setup - CMS AUTH TOKEN
+
+```bash
+> cms setup cms_auth_token [--force]
+```
+This command can be used to generate key pair and create the self signed certificates. Using which new token is generated which can be used in AAS for initial setup, ‘--force’ parameter will force to regenerate key pairs/certificate and regenerate auth token. 
+
+Command implementation details–
+ 1. creates RSA 3072 bits long key pair
+ 2. generate self signed signing certificate
+ 3. store certificate in '/etc/cms/jwt' config directory
+ 4. outputs token on console
 
 ## Start/Stop
 
@@ -237,4 +262,52 @@ Uninstalls Certificate Management Service
 ```bash
 > cms version
     Certificate Management Service v1.0.0 build 9cf83e2
+```
+
+## Environment Details
+There are several parameters associated with CMS installation and setup task. The following provides an explanation of how they can be used
+```bash
+#Environment Variables
+#Default is false, this is used to skip all setup tasks at the time of installation
+CMS_NOSETUP=false
+
+#CMS port details, default port is 8443
+CMS_PORT=8443
+
+#CMS certificate specific properties
+#Default is 5 years
+CMS_CA_CERT_VALIDITY=5 
+CMS_CA_ORGANIZATION=INTEL
+CMS_CA_LOCALITY=SC
+CMS_CA_PROVINCE=SF
+CMS_CA_COUNTRY=US
+
+#SAN list for TLS certificate
+CMS_HOST_NAMES=127.0.0.1,localhost
+
+#These details are for future work when CMS need to support multiple algorithms
+CMS_KEY_ALGORITHM="rsa"
+CMS_KEY_ALGORITHM_LENGTH=3072
+
+#Config Parameters
+port: 8443
+loglevel: info
+cacertvalidity: 5
+organization: "INTEL"
+locality: "SC"
+province: "SF"
+country: "US"
+#These details are for future work when CMS need to support multiple algorithms
+keyalgorithm: rsa
+keyalgorithmlength: 3072
+#Setup token will have following AAS roles defined
+aasjwtcn: "AAS JWT Signing Certificate"
+aastlscn: "AAS TLS Certificate"
+aastlssan: "127.0.0.1,localhost"
+authdefender:
+  maxattempts: 5
+  intervalmins: 5
+  lockoutdurationmins: 15
+
+#Environment variables will take higher precedence.
 ```
