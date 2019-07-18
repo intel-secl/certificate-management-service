@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+	"strings"
 	"github.com/gorilla/mux"
 	"intel/isecl/lib/common/context"
 	ct "intel/isecl/lib/common/types/aas"
@@ -56,6 +57,13 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		httpWriter.Write([]byte("Accept type not supported"))
 		return
 	}
+	certType := httpRequest.URL.Query().Get("certType")
+	if certType == "" {
+		log.Errorf("Accept type not supported")
+		httpWriter.Write([]byte("Query parameter certType missing"))
+		httpWriter.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	responseBodyBytes, err := ioutil.ReadAll(httpRequest.Body)
 	if err != nil {
@@ -82,7 +90,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		return
 	}
 	
-	err = validation.ValidateCertificateRequest(config, clientCSR, ctxMap)
+	err = validation.ValidateCertificateRequest(config, clientCSR, certType, ctxMap)
 	if err != nil {
 		log.Errorf("Invalid CSR provided: %v", err)
 		httpWriter.WriteHeader(http.StatusBadRequest)
@@ -112,15 +120,21 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
         Subject:      clientCSR.Subject,
         NotBefore:    time.Now(),
         NotAfter:     time.Now().AddDate(1, 0, 0),
-        KeyUsage:     x509.KeyUsageDigitalSignature,
-        ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 	 }
 
-	for _, extension := range clientCSR.Extensions {
-		if len(extension.Value) == 4 && extension.Value[3] == 160 {
-			clientCRTTemplate.KeyUsage |= x509.KeyUsageKeyEncipherment
-		}
-	}
+	 if strings.EqualFold(certType, "TLS") {
+		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageContentCommitment
+		clientCRTTemplate.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}
+	 } else if strings.EqualFold(certType, "Flavor-Signing") {
+		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageContentCommitment
+	 } else if strings.EqualFold(certType, "JWT-Signing") {
+		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageContentCommitment
+	 } else {
+		log.Errorf("Invalid certType provided")
+		httpWriter.WriteHeader(http.StatusBadRequest)
+		httpWriter.Write([]byte("Invalid certType provided"))
+		return
+	 }
 
 	keyPair, err := tls.LoadX509KeyPair(constants.RootCACertPath, constants.RootCAKeyPath)
 	if err != nil {

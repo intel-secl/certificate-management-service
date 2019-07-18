@@ -63,8 +63,8 @@
 	} 
 
 	 ur := []ct.RoleInfo {
-		 ct.RoleInfo{"CMS",constants.CertApproverGroupName,"CN=" + at.Config.AasJwtCn}, 
-		 ct.RoleInfo{"CMS",constants.CertApproverGroupName,"CN=" + at.Config.AasTlsCn + ";SAN=" + at.Config.AasTlsSan},
+		 ct.RoleInfo{"CMS",constants.CertApproverGroupName,"CN=" + at.Config.AasJwtCn + ";CERTTYPE=JWT-Signing"}, 
+		 ct.RoleInfo{"CMS",constants.CertApproverGroupName,"CN=" + at.Config.AasTlsCn + ";SAN=" + at.Config.AasTlsSan + ";CERTTYPE=TLS"},
 		}
 	 claims := ct.RoleSlice{ur}
 	 jwt, err := factory.Create(&claims,"CMS JWT Token", 0)

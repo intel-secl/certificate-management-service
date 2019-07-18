@@ -9,13 +9,14 @@ import (
 	"errors"
 
 	"strings"
+	"net"
 	"intel/isecl/cms/config"
 	types "intel/isecl/lib/common/types/aas"
 	log "github.com/sirupsen/logrus"
 )
 
 //ValidateCertificateRequest is used to validate the Certificate Signing Request
-func ValidateCertificateRequest(conf *config.Configuration, csr *x509.CertificateRequest,
+func ValidateCertificateRequest(conf *config.Configuration, csr *x509.CertificateRequest, certType string,
 	 ctxMap *map[string]*types.RoleInfo) error {
 	//var csrBytes []byte
 	oidExtensionBasicConstraints := []int{2, 5, 29, 19}
@@ -46,14 +47,18 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 
 	// Validate CN
 	cnSanMapFromToken := make(map[string]string)
+	cnTypeMapFromToken := make(map[string]string)
+
 	for k,_  := range *ctxMap {
-		cnSans := strings.Split(k, ";")		
-		if len(cnSans) < 2 {
-			cnSanMapFromToken[cnSans[0]] = ""		
+		params := strings.Split(k, ";")		
+		if len(params) < 3 {
+			cnSanMapFromToken[params[0]] = ""	
+			cnTypeMapFromToken[params[0]] = params[1]	
 		} else {
-			cnSanMapFromToken[cnSans[0]] = cnSans[1]		
+			cnSanMapFromToken[params[0]] = params[1]
+			cnTypeMapFromToken[params[0]] = params[2]		
 		}
-		log.Info("Common Name in Token : " + cnSans[0])		
+		log.Info("Common Name in Token : " + params[0])		
 	}
 	subjectsFromCsr := strings.Split(csr.Subject.String(), ",")
 	subjectFromCsr := ""
@@ -68,10 +73,27 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 	log.Info("Common Name in CSR : " + csr.Subject.String())		
 	if sanlistFromToken, ok := cnSanMapFromToken[subjectFromCsr]; ok {
 		log.Info("Got valid Common Name in CSR : " + csr.Subject.String())		
-		log.Info(sanlistFromToken)
+		if sanlistFromToken != "" {
+			sans := strings.Split(sanlistFromToken, "=")
+			if len(sans) > 1 {	
+				tokenSanList := strings.Split(sans[1], ",")	
+				for _, san := range tokenSanList {				
+					if !ipInSlice(san, csr.IPAddresses) && !stringInSlice(san, csr.DNSNames) {
+						log.Errorf("No role associated with provided SAN list in CSR")		
+						return errors.New("No role associated with provided SAN list in CSR")
+					}
+				}		
+			}					
+			log.Info(sanlistFromToken)
+		}
 	} else {
 		log.Errorf("No role associated with provided Common Name in CSR")		
 		return errors.New("No role associated with provided Common Name in CSR")
+	}
+
+	if certTypeFromToken, _ := cnTypeMapFromToken[subjectFromCsr]; strings.EqualFold("certType=" + certType, certTypeFromToken) {
+		log.Errorf("No role associated with provided Certificate Type")		
+		return errors.New("No role associated with provided Certificate Type")
 	}
 
 	// Validate SAN list
@@ -108,4 +130,26 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 		//return errors.New("Valid key usage not found in CSR")
 	}
 	return nil
+}
+
+
+func stringInSlice(str string, list []string) bool {
+	for _, v := range list {
+		if strings.EqualFold(v,str) {
+			return true
+		}
+	}
+	return false
+}
+
+
+func ipInSlice(h string, list []net.IP) bool {
+	for _, v := range list {
+		if ip := net.ParseIP(h); ip != nil {		
+			if strings.EqualFold(v.String(), h) {
+				return true
+			}
+		}
+	}
+	return false
 }
