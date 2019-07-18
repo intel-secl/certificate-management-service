@@ -5,17 +5,34 @@
 package resource
 
 import (
-	"net/http"
+	"intel/isecl/lib/common/middleware"
+	"intel/isecl/cms/config"
 	"github.com/gorilla/mux"
 )
 
+func fnGetJwtCerts() error {
+	return nil
+}
+
 func setupRouter() *mux.Router {
-	m := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next.ServeHTTP(w, r)
-                })
-	}
-	r := mux.NewRouter().PathPrefix("/cms").Subrouter()
-	r.Use(m)
+
+	r := mux.NewRouter()
+	sr := r.PathPrefix("/cms/v1/certificates").Subrouter()
+	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", fnGetJwtCerts))
+	c := config.Configuration{}
+	func(setters ...func(*mux.Router, *config.Configuration)) {
+		for _, s := range setters {
+			s(sr, &c)
+		}
+	}(SetCertificates)
+
+	sr = r.PathPrefix("/cms/v1").Subrouter()
+	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", fnGetJwtCerts))
+	func(setters ...func(*mux.Router, *config.Configuration)) {
+		for _, s := range setters {
+			s(sr,&c)
+		}
+	}(SetVersion, SetCACertificates)
+
 	return r
 }
