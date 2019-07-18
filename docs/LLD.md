@@ -47,13 +47,14 @@ MYVYqMHd9AuoWtyd1yATQppyTBbPrrgj5wI2TUMNNmk5JGIN6WQ=
 -----END CERTIFICATE-----
 ```
 ## Certificates
-### POST `/cms/v1/certificates`
+### POST `/cms/v1/certificates?certType=TLS`
 
 Signs certificates for the requested CSR
 
 - Authorization: `JWT Token`
 - Content-Type: `application/x-pem-file`
 - Accept: `application/x-pem-file`
+- Parameters: `certType=TLS|JWT-Signing|Flavor-Signing`
 ```pem
 -----BEGIN CERTIFICATE REQUEST-----
 MIIDuTCCAiECAQAwRTELMAkGA1UEBhMCSU4xCzAJBgNVBAgMAktOMQswCQYDVQQH

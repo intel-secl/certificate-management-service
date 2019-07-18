@@ -91,8 +91,8 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 		return errors.New("No role associated with provided Common Name in CSR")
 	}
 
-	if certTypeFromToken, _ := cnTypeMapFromToken[subjectFromCsr]; strings.EqualFold("certType=" + certType, certTypeFromToken) {
-		log.Errorf("No role associated with provided Certificate Type")		
+	if certTypeFromToken, _ := cnTypeMapFromToken[subjectFromCsr]; !strings.EqualFold("CERTTYPE=" + certType, certTypeFromToken) {
+		log.Errorf("No role associated with provided Certificate Type in request - " + certType)
 		return errors.New("No role associated with provided Certificate Type")
 	}
 
