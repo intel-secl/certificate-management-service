@@ -32,6 +32,7 @@ type Configuration struct {
 	KeyAlgorithm           string
 	KeyAlgorithmLength     int
 	RootCACertDigest       string
+	TokenDurationMins      int
 
 	AasJwtCn               string
 	AasTlsCn               string

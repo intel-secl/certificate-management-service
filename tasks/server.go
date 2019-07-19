@@ -49,7 +49,9 @@ func (s Server) Run(c setup.Context) error {
 	s.Config.AuthDefender.MaxAttempts = constants.DefaultAuthDefendMaxAttempts
 	s.Config.AuthDefender.IntervalMins = constants.DefaultAuthDefendIntervalMins
 	s.Config.AuthDefender.LockoutDurationMins = constants.DefaultAuthDefendLockoutMins
-
+	if s.Config.TokenDurationMins == 0 {
+		s.Config.TokenDurationMins = constants.DefaultTokenDurationMins
+	}
 	return s.Config.Save()
 }
 

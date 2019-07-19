@@ -3,7 +3,7 @@ info:
   version: 1.0.0
   title: ISecL Certificate Management Service
 servers:
-  - url: http://cms.com/v2/cms
+  - url: http://cms.com/cms/v1
 paths:
   /version:
     get:

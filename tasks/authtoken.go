@@ -14,6 +14,7 @@
 	 "intel/isecl/cms/constants"
 	 "io"
 	 "os"
+	 "time"
 	 "encoding/pem"
 	 jwtauth "intel/isecl/lib/common/jwt"
 	 ct "intel/isecl/lib/common/types/aas"
@@ -42,7 +43,7 @@
 	   return fmt.Errorf("jwt setup: %v", err)
    }
    fmt.Fprintln(at.ConsoleWriter, "Running CMS generate JWT token setup...")
-	 factory, err := jwtauth.NewTokenFactory(key, true, certPemBytes, "CMS JWT Signing", 0)
+	 factory, err := jwtauth.NewTokenFactory(key, true, certPemBytes, "CMS JWT Signing", time.Duration(at.Config.TokenDurationMins) * time.Minute)
 	 if err != nil {
 		 fmt.Println(err)
 		 return err

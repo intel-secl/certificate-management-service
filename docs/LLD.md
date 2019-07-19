@@ -110,6 +110,9 @@ Error Responses:
 403: Forbidden    - Bearer token does contain the required role for the requested CSR
 ```
 
+#### NOTE
+Extensions validation will not happen in CMS, KeyUsages and ExtendedKeyUsages will be populated on the basis of certificate type
+
 ## User Stories
 ### Download Root CA certificate
 As a user, I want to download Root CA certificate from CMS.
@@ -225,6 +228,28 @@ Command implementation details–
  2. generate self signed signing certificate
  3. store certificate in '/etc/cms/jwt' config directory
  4. outputs token on console
+
+### Predefined AAS roles
+```json
+{
+  "roles": [
+    {
+      "service": "CMS",
+      "name": "CertApprover",
+      "context": "CN=AAS JWT Signing Certificate;CERTTYPE=JWT-Signing"
+    },
+    {
+      "service": "CMS",
+      "name": "CertApprover",
+      "context": "CN=AAS TLS Certificate;SAN=127.0.0.1,localhost;CERTTYPE=TLS"
+    }
+  ],
+  "exp": 1563988236,
+  "iat": 1563901836,
+  "iss": "CMS JWT Signing",
+  "sub": "CMS JWT Token"
+}
+```
 
 ## Start/Stop
 

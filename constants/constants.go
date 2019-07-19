@@ -49,6 +49,7 @@ const (
 	DefaultAasJwtCn               = "AAS JWT Signing Certificate"	
 	DefaultAasTlsCn               = "AAS TLS Certificate"
 	DefaultAasTlsSan              = "127.0.0.1,localhost"
+	DefaultTokenDurationMins      = 240
 )
 
 // State represents whether or not a daemon is running or not
