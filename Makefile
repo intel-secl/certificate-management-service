@@ -8,12 +8,6 @@ VERSION := $(or ${GITTAG}, v0.0.0)
 cms:
 	env GOOS=linux go build -ldflags "-X intel/isecl/cms/version.Version=$(VERSION) -X intel/isecl/cms/version.GitHash=$(GITCOMMIT)" -o out/cms
 
-test:
-	go test ./... -coverprofile cover.out
-	go tool cover -func cover.out
-	go tool cover -html=cover.out -o cover.html
-
-
 installer: cms
 	mkdir -p out/installer
 	cp dist/linux/cms.service out/installer/cms.service
@@ -35,7 +29,7 @@ docker-zip: installer
 	cp dist/docker/Dockerfile out/docker-cms/Dockerfile
 	zip -r out/docker-cms.zip out/docker-cms	
 
-all: test docker
+all: docker
 
 clean:
 	rm -f cover.*
