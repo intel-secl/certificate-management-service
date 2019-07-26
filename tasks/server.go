@@ -12,7 +12,6 @@ import (
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/constants"
 	"io"
-	"strings"
 )
 
 type Server struct {
@@ -27,15 +26,7 @@ func (s Server) Run(c setup.Context) error {
 	if err != nil {
 		defaultPort = constants.DefaultPort
 	}
-	authServiceUrl, err := c.GetenvString("AAS_URL", "Auth Service http url")
-	if err != nil {
-                return err
-        }
-	if strings.HasSuffix(authServiceUrl, "/") {
-                s.Config.AuthServiceUrl = authServiceUrl
-        } else {
-                s.Config.AuthServiceUrl = authServiceUrl + "/"
-        }
+	authServiceUrl, _ := c.GetenvString("AAS_URL", "Auth Service http url")
 
 	fs := flag.NewFlagSet("server", flag.ContinueOnError)
 	fs.IntVar(&s.Config.Port, "port", defaultPort, "Certificate Management Service http port")
