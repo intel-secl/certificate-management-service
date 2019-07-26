@@ -23,6 +23,7 @@ type Configuration struct {
 	configFile       string
 	Port             int
 	LogLevel         log.Level
+	AuthServiceUrl         string
 
 	CACertValidity         int
 	Organization           string

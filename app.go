@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"flag"
 	"fmt"
@@ -14,12 +15,14 @@ import (
 	e "intel/isecl/lib/common/exec"
 	"intel/isecl/lib/common/setup"
 	"intel/isecl/lib/common/validation"
+	cos "intel/isecl/lib/common/os"
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/constants"
 	"intel/isecl/cms/resource"
 	"intel/isecl/cms/tasks"
 	"intel/isecl/cms/version"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -281,8 +284,47 @@ func (a *App) Run(args []string) error {
 	return nil
 }
 
-func (a *App) RetrieveJWTSigningCerts() error {
-	fmt.Println("TODO: implement the function to retrieve JWT signing certificate")
+func (a *App) fnGetJwtCerts() error {
+	c := a.configuration()
+	url := c.AuthServiceUrl + "noauth/jwt-certificates"
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Add("accept", "application/x-pem-file")
+	rootCaCertPems, err := cos.GetDirFileContents(constants.RootCADirPath, "*.pem" )
+	if err != nil {
+		return err
+	}
+
+	// Get the SystemCertPool, continue with an empty pool on error
+	rootCAs, _ := x509.SystemCertPool()
+	if rootCAs == nil {
+		rootCAs = x509.NewCertPool()
+	}
+	for _, rootCACert := range rootCaCertPems{
+		if ok := rootCAs.AppendCertsFromPEM(rootCACert); !ok {
+	                return err
+	        }
+	}
+	httpClient := &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: false,
+						RootCAs: rootCAs,
+						},
+					},
+				}
+	
+	res, err := httpClient.Do(req)
+	if err != nil {
+                return fmt.Errorf("Could not retrieve jwt certificate")
+        }
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
+	err = crypt.SavePemCertWithShortSha1FileName(body, constants.TrustedJWTSigningCertsDir)
+	if err != nil {
+		fmt.Println("Could not store Certificate")
+		return fmt.Errorf("Certificate setup: %v", err)
+	}
+
 	return nil
 }
 
@@ -299,7 +341,7 @@ func (a *App) startServer() error {
 	}(resource.SetVersion, resource.SetCACertificates)
 
 	sr = r.PathPrefix("/cms/v1/certificates").Subrouter()
-	sr.Use(middleware.NewTokenAuth(constants.TrustedJWTSigningCertsDir, constants.ConfigDir, a.RetrieveJWTSigningCerts))
+	sr.Use(middleware.NewTokenAuth(constants.TrustedJWTSigningCertsDir, constants.ConfigDir, a.fnGetJwtCerts))
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
 			s(sr,c)

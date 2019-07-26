@@ -1,24 +1,23 @@
 #!/bin/bash
 
-# READ .env file 
+# READ .env file
 echo PWD IS $(pwd)
-if [ -f ~/cms.env ]; then 
+if [ -f ~/cms.env ]; then
     echo Reading Installation options from `realpath ~/cms.env`
-    source ~/cms.env
+    env_file=~/cms.env
 elif [ -f ../cms.env ]; then
     echo Reading Installation options from `realpath ../cms.env`
-    source ../cms.env
+    env_file=../cms.env
+fi
+
+if [ -n $env_file ]; then
+    source $env_file
+    env_file_exports=$(cat $env_file | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
+    if [ -n "$env_file_exports" ]; then eval export $env_file_exports; fi
 else
     echo No .env file found
     CMS_NOSETUP="true"
 fi
-
-# Export all known variables
-export CMS_PORT
-
-export CMS_ADMIN_USERNAME
-
-export CMS_TLS_HOSTS
 
 if [[ $EUID -ne 0 ]]; then 
     echo "This installer must be run as root"
@@ -53,6 +52,10 @@ chmod g+s $CONFIG_PATH
 mkdir -p $CONFIG_PATH/jwt && chown cms:cms $CONFIG_PATH/jwt
 chmod 700 $CONFIG_PATH/jwt
 chmod g+s $CONFIG_PATH/jwt
+
+mkdir -p $CONFIG_PATH/root-ca && chown cms:cms $CONFIG_PATH/root-ca
+chmod 700 $CONFIG_PATH/root-ca
+chmod g+s $CONFIG_PATH/root-ca
 
 # Create logging dir in /var/log
 mkdir -p $LOG_PATH && chown cms:cms $LOG_PATH

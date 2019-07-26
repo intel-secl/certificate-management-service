@@ -12,6 +12,7 @@ import (
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/constants"
 	"io"
+	"strings"
 )
 
 type Server struct {
@@ -26,8 +27,19 @@ func (s Server) Run(c setup.Context) error {
 	if err != nil {
 		defaultPort = constants.DefaultPort
 	}
+	authServiceUrl, err := c.GetenvString("AAS_URL", "Auth Service http url")
+	if err != nil {
+                return err
+        }
+	if strings.HasSuffix(authServiceUrl, "/") {
+                s.Config.AuthServiceUrl = authServiceUrl
+        } else {
+                s.Config.AuthServiceUrl = authServiceUrl + "/"
+        }
+
 	fs := flag.NewFlagSet("server", flag.ContinueOnError)
 	fs.IntVar(&s.Config.Port, "port", defaultPort, "Certificate Management Service http port")
+	fs.StringVar(&s.Config.AuthServiceUrl, "aas-url", authServiceUrl, "auth service http url")
 	err = fs.Parse(s.Flags)
 	if err != nil {
 		return err
@@ -36,6 +48,7 @@ func (s Server) Run(c setup.Context) error {
 		return errors.New("Invalid or reserved port")
 	}
 	fmt.Fprintf(s.ConsoleWriter, "Using HTTPS port: %d\n", s.Config.Port)
+	fmt.Fprintf(s.ConsoleWriter, "service url :%s", authServiceUrl)
 
 	s.Config.KeyAlgorithm, err = c.GetenvString("CMS_KEY_ALGORITHM", "Certificate Management Service Key Algorithm")
 	if err != nil {
