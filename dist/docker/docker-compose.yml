@@ -5,7 +5,7 @@ services:
       image: isecl/cms:latest
       hostname: cms
       ports:
-         - 8443:8443
+         - 8445:8445
 
       environment:
          CMS_ADMIN_USERNAME: ${CMS_ADMIN_USERNAME:-admin}

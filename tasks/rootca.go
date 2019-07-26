@@ -128,21 +128,21 @@
 		 //Store key and certificate
 		 err = crypt.SavePrivateKeyAsPKCS8(key, constants.RootCAKeyPath)
 		 if err != nil {
-			return fmt.Errorf("Root CA setup: %v", err)
+			return fmt.Errorf("Root CA setup: 1 %v", err)
 		}
 		err = crypt.SavePemCert(cert, constants.RootCACertPath)			
 		 if err != nil {
-			return fmt.Errorf("Root CA setup: %v", err)
+			return fmt.Errorf("Root CA setup: 2 %v", err)
 		}
 
 		//store SHA384 of ROOT CA for further use
 		rootCACertificateBytes, err := ioutil.ReadFile(constants.RootCACertPath)
 		if err != nil {
-			return fmt.Errorf("Root CA setup: %v", err)
+			return fmt.Errorf("Root CA setup: 3 %v", err)
 		}
 		caDigest, err := crypt.GetCertHashFromPemInHex(rootCACertificateBytes, crypto.SHA384)
 		if err != nil {
-			return fmt.Errorf("Root CA setup: %v", err)
+			return fmt.Errorf("Root CA setup: 4 %v", err)
 		}
 		ca.Config.RootCACertDigest = caDigest
 		fmt.Println("Root CA Certificate Digest : ", caDigest)

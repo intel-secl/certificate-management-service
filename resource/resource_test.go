@@ -10,15 +10,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func fnGetJwtCerts() error {
+func mockRetrieveJWTSigningCerts() error {
 	return nil
 }
+
 
 func setupRouter() *mux.Router {
 
 	r := mux.NewRouter()
 	sr := r.PathPrefix("/cms/v1/certificates").Subrouter()
-	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", fnGetJwtCerts))
+	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", mockRetrieveJWTSigningCerts))
 	c := config.Configuration{}
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
@@ -27,7 +28,7 @@ func setupRouter() *mux.Router {
 	}(SetCertificates)
 
 	sr = r.PathPrefix("/cms/v1").Subrouter()
-	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", fnGetJwtCerts))
+	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", mockRetrieveJWTSigningCerts))
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
 			s(sr,&c)

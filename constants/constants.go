@@ -19,7 +19,8 @@ const (
 	ConfigFile                    = "config.yml"
 	TokenKeyFile                  = "cms-jwt-key.pem"
 	TrustedJWTSigningCertsDir     = ConfigDir + "jwt/"
-	RootCACertPath                = ConfigDir + "root-ca-cert.pem"
+	RootCADirPath		      = ConfigDir + "root-ca/"
+	RootCACertPath                = RootCADirPath + "root-ca-cert.pem"
 	RootCAKeyPath                 = ConfigDir + "root-ca-key.pem"
 	TLSCertPath                   = ConfigDir + "tls-cert.pem"
 	TLSKeyPath                    = ConfigDir + "tls-key.pem"
@@ -37,7 +38,7 @@ const (
 	DefaultAuthDefendLockoutMins  = 15
 	DefaultSSLCertFilePath        = ConfigDir + "cms_cert.pem"
 	DefaultRootCACommonName       = "CMSCA"
-	DefaultPort                   = 8443
+	DefaultPort                   = 8445
 	DefaultOrganization           = "INTEL"
 	DefaultCountry                = "US"
 	DefaultProvince               = "CA"

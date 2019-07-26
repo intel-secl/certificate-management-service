@@ -7,12 +7,14 @@ package tasks
 
 import (
         "os"
+	"intel/isecl/cms/constants"
 )
 
 func CreateSerialNumberFileAndJWTDir(){
-        os.MkdirAll("/etc/cms", os.ModePerm)
-        os.MkdirAll("/etc/cms/jwt", os.ModePerm)
-        var file, _ = os.Create("/etc/cms/serial-number")
+        os.MkdirAll(constants.ConfigDir, os.ModePerm)
+        os.MkdirAll(constants.TrustedJWTSigningCertsDir, os.ModePerm)
+	os.MkdirAll(constants.RootCADirPath, os.ModePerm)
+        var file, _ = os.Create(constants.SerialNumberPath)
         defer file.Close()
 }
 
