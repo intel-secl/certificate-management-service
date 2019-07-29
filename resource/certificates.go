@@ -105,6 +105,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		httpWriter.Write([]byte("Failed to read next Serial Number" + err.Error()))
 		return
 	}
+	RootCertificateTemplate := tasks.GetRootCACertDefaultTemplate(config)
 	clientCRTTemplate := x509.Certificate{
 		Signature:          clientCSR.Signature,
 		SignatureAlgorithm: clientCSR.SignatureAlgorithm,
@@ -116,7 +117,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		DNSNames:    clientCSR.DNSNames,
 
 		SerialNumber: serialNumber,
-		Issuer:       tasks.RootCertificateTemplate.Issuer,
+		Issuer:       RootCertificateTemplate.Issuer,
 		Subject:      clientCSR.Subject,
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(1, 0, 0),
@@ -143,7 +144,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		httpWriter.Write([]byte("Cannot load TLS key pair"))
 	}
 
-	certificate, err := x509.CreateCertificate(rand.Reader, &clientCRTTemplate, &tasks.RootCertificateTemplate, clientCSR.PublicKey, keyPair.PrivateKey)
+	certificate, err := x509.CreateCertificate(rand.Reader, &clientCRTTemplate, &RootCertificateTemplate, clientCSR.PublicKey, keyPair.PrivateKey)
 	if err != nil {
 		log.Errorf("Cannot create certificate: %v", err)
 		httpWriter.WriteHeader(http.StatusInternalServerError)

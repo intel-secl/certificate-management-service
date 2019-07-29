@@ -41,7 +41,7 @@ const (
 	DefaultPort                   = 8445
 	DefaultOrganization           = "INTEL"
 	DefaultCountry                = "US"
-	DefaultProvince               = "CA"
+	DefaultProvince               = "SF"
 	DefaultLocality               = "SC"
 	DefaultCACertValidiy          = 5
 	DefaultKeyAlgorithm           = "rsa"

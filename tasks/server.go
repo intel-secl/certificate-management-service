@@ -56,7 +56,8 @@ func (s Server) Run(c setup.Context) error {
 	if s.Config.TokenDurationMins == 0 {
 		s.Config.TokenDurationMins = constants.DefaultTokenDurationMins
 	}
-	return s.Config.Save()
+	s.Config.Save()
+	return nil
 }
 
 func (s Server) Validate(c setup.Context) error {

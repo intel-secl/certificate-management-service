@@ -17,7 +17,7 @@ The `Certificate Management Service` has following core functionalities:
 
 ### GET `/cms/v1/ca-certificates`
 Retrieve the root CA Certificate configured in CMS
-- Content-Type: `application/x-pem-file`
+- Accept: `application/x-pem-file`
 
 Example Response:
 ```pem
@@ -297,8 +297,8 @@ There are several parameters associated with CMS installation and setup task. Th
 #Default is false, this is used to skip all setup tasks at the time of installation
 CMS_NOSETUP=false
 
-#CMS port details, default port is 8443
-CMS_PORT=8443
+#CMS port details, default port is 8445
+CMS_PORT=8445
 
 #CMS certificate specific properties
 #Default is 5 years

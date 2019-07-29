@@ -57,7 +57,7 @@
 	 if err != nil {
 		return nil, nil, err
 	}
-
+	RootCertificateTemplate := GetRootCACertDefaultTemplate(ts.Config)
 	 clientCRTTemplate := x509.Certificate{
         Signature:          clientCSR.Signature,
         SignatureAlgorithm: clientCSR.SignatureAlgorithm,

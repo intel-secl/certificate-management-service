@@ -30,62 +30,40 @@
 	 Config           *config.Configuration
  }
 
- var RootCertificateTemplate = x509.Certificate{	
-	Subject: pkix.Name{
-		CommonName:   constants.DefaultRootCACommonName,
-	},
-	Issuer: pkix.Name{
-		CommonName: constants.DefaultRootCACommonName,
-	},
-	NotBefore: time.Now(),
 
-	KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-	BasicConstraintsValid: true,
-	IsCA:                  true,
+ func GetRootCACertDefaultTemplate(config *config.Configuration) (RootCertificateTemplate x509.Certificate) {
+	return x509.Certificate{	
+		Subject: pkix.Name{
+			CommonName:   constants.DefaultRootCACommonName,
+			Organization: []string {config.Organization},
+			Country:      []string {config.Country},
+			Province:     []string {config.Province},
+			Locality:     []string {config.Locality},
+		},
+		Issuer: pkix.Name{
+			CommonName: constants.DefaultRootCACommonName,
+		},
+		NotBefore: time.Now(),
+		NotAfter: time.Now().AddDate(config.CACertValidity, 0, 0),
+
+		SerialNumber:          big.NewInt(0),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	 };
  }
 
  func getRootCACertTemplate(ca Root_Ca, pubKey crypto.PublicKey) (caCertTemplate x509.Certificate, err error) {	
-	var serialNumber = big.NewInt(0)
-	err = utils.WriteSerialNumber(serialNumber)
+	RootCertificateTemplate := GetRootCACertDefaultTemplate(ca.Config);	
+	err = utils.WriteSerialNumber(RootCertificateTemplate.SerialNumber)
 	if err != nil {
 		return RootCertificateTemplate, err
 	}
-	RootCertificateTemplate.SerialNumber = serialNumber
 
 	RootCertificateTemplate.SignatureAlgorithm, err = crypt.GetSignatureAlgorithm(pubKey)
 	if err != nil {
 		return RootCertificateTemplate, err
 	}
-
-	certValidity := ca.Config.CACertValidity
-	if certValidity == 0 {		
-		certValidity = constants.DefaultCACertValidiy
-	}
-	RootCertificateTemplate.NotAfter = time.Now().AddDate(certValidity, 0, 0)
-	/*
-	if ca.Config.Organization != "" {
-		RootCertificateTemplate.Subject.Organization = append(RootCertificateTemplate.Subject.Organization, ca.Config.Organization)
-	} else {
-		RootCertificateTemplate.Subject.Organization = append(RootCertificateTemplate.Subject.Organization, constants.DefaultOrganization)
-	}
-
-	if ca.Config.Country != "" {
-		RootCertificateTemplate.Subject.Country = append(RootCertificateTemplate.Subject.Country, ca.Config.Country)
-	} else {
-		RootCertificateTemplate.Subject.Country = append(RootCertificateTemplate.Subject.Country, constants.DefaultCountry)
-	}
-
-	if ca.Config.Province != "" {
-		RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Province, ca.Config.Province)
-	} else {
-		RootCertificateTemplate.Subject.Province = append(RootCertificateTemplate.Subject.Province, constants.DefaultProvince)
-	}
-
-	if ca.Config.Locality != "" {
-		RootCertificateTemplate.Subject.Locality = append(RootCertificateTemplate.Subject.Locality, ca.Config.Locality)
-	} else {
-		RootCertificateTemplate.Subject.Locality = append(RootCertificateTemplate.Subject.Locality, constants.DefaultLocality)
-	}*/
 	return RootCertificateTemplate, err
 }
 
@@ -105,7 +83,35 @@
 	return 
  }
  
+func updateConfig(s Root_Ca, c setup.Context) (err error){
+	s.Config.CACertValidity, err = c.GetenvInt("CMS_CA_CERT_VALIDITY", "Certificate Management Service Root Certificate Validity")
+	if err != nil {
+		s.Config.CACertValidity = constants.DefaultCACertValidiy
+	} 
 
+	s.Config.Organization, err = c.GetenvString("CMS_CA_ORGANIZATION", "Certificate Management Service Root Certificate Organization")
+	if err != nil {
+		s.Config.Organization = constants.DefaultOrganization
+	}
+
+	s.Config.Locality, err = c.GetenvString("CMS_CA_LOCALITY", "Certificate Management Service Root Certificate Locality")
+	if err != nil {
+		s.Config.Locality = constants.DefaultLocality
+	}
+
+	s.Config.Province, err = c.GetenvString("CMS_CA_PROVINCE", "Certificate Management Service Root Certificate Province")
+	if err != nil {
+		s.Config.Province = constants.DefaultProvince
+	} 
+
+	s.Config.Country, err = c.GetenvString("CMS_CA_COUNTRY", "Certificate Management Service Root Certificate Country")
+	if err != nil {
+		s.Config.Country = constants.DefaultCountry
+	} 
+
+	s.Config.Save()
+	return nil
+}
  func (ca Root_Ca) Run(c setup.Context) error {
 	 fmt.Fprintln(ca.ConsoleWriter, "Running Root CA setup...")
 	 fs := flag.NewFlagSet("root_ca", flag.ContinueOnError)
@@ -116,6 +122,7 @@
 		 return err
 	 }
 	if *force || ca.Validate(c) != nil {
+		 _ = updateConfig(ca, c)
 	 	 privKey, cert, err := createRootCACert(ca)
 		 if err != nil {
 			 return fmt.Errorf("Root CA setup: %v", err)
