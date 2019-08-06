@@ -26,7 +26,7 @@ func (s Server) Run(c setup.Context) error {
 	if err != nil {
 		defaultPort = constants.DefaultPort
 	}
-	authServiceUrl, _ := c.GetenvString("AAS_URL", "Auth Service http url")
+	authServiceUrl, _ := c.GetenvString("AAS_API_URL", "Auth Service http url")
 
 	fs := flag.NewFlagSet("server", flag.ContinueOnError)
 	fs.IntVar(&s.Config.Port, "port", defaultPort, "Certificate Management Service http port")

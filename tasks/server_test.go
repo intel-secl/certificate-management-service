@@ -19,7 +19,7 @@ func TestServerSetupEnv(t *testing.T) {
 	os.Setenv("CMS_PORT", "1337")
 	os.Setenv("CMS_KEY_ALGORITHM", "RSA")
 	os.Setenv("CMS_KEY_LENGTH", "3072")
-	os.Setenv("AAS_URL","https://192.178.182.1:1337/aas")
+	os.Setenv("AAS_API_URL","https://192.178.182.1:1337/aas")
 	c := config.Configuration{}
 	s := Server{
 		Flags:         nil,
