@@ -75,18 +75,10 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		return
 	}
 
-	err = v.ValidatePemEncodedKey(string(responseBodyBytes))
-	if err != nil {
-		log.Errorf("Cannot read http request body: %v", err)
-		httpWriter.Write([]byte("Invalid pem format"))
-		httpWriter.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	pemBlock, _ := pem.Decode(responseBodyBytes)
 	if pemBlock == nil {
 		log.Errorf("Failed to decode pem: %s", err)
-		httpWriter.WriteHeader(http.StatusBadRequest)
+		httpWriter.WriteHeader(http.StatusBadRequest) 
 		httpWriter.Write([]byte("Failed to decode pem" + err.Error()))
 		return
 	}
