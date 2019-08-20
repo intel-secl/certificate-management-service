@@ -58,10 +58,16 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		return
 	}
 	certType := httpRequest.URL.Query().Get("certType")
+	if (certType == "") {
+		log.Errorf("Accept type not supported")
+		httpWriter.Write([]byte("Query parameter certType missing"))
+		httpWriter.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	certTypeVal := []string{certType}
 	if validateErr := v.ValidateStrings(certTypeVal); validateErr != nil {
 		log.Errorf("Accept type not supported")
-		httpWriter.Write([]byte("Query parameter certType missing or invalid format"))
+		httpWriter.Write([]byte("Query parameter certType is in invalid format"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		return
 	}
