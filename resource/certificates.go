@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
+	v "intel/isecl/lib/common/validation"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -58,9 +58,16 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		return
 	}
 	certType := httpRequest.URL.Query().Get("certType")
-	if certType == "" {
+	if (certType == "") {
 		log.Errorf("Accept type not supported")
 		httpWriter.Write([]byte("Query parameter certType missing"))
+		httpWriter.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	certTypeVal := []string{certType}
+	if validateErr := v.ValidateStrings(certTypeVal); validateErr != nil {
+		log.Errorf("Accept type not supported")
+		httpWriter.Write([]byte("Query parameter certType is in invalid format"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -77,7 +84,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	pemBlock, _ := pem.Decode(responseBodyBytes)
 	if pemBlock == nil {
 		log.Errorf("Failed to decode pem: %s", err)
-		httpWriter.WriteHeader(http.StatusBadRequest)
+		httpWriter.WriteHeader(http.StatusBadRequest) 
 		httpWriter.Write([]byte("Failed to decode pem" + err.Error()))
 		return
 	}
