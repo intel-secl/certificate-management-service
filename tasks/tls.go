@@ -8,6 +8,7 @@
 	 "crypto/rand"
 	 "crypto/x509"
 	 "crypto/tls"
+	 "crypto/x509/pkix"
 	 "errors"
 	 "flag"
 	 "fmt"
@@ -43,7 +44,13 @@
  }
  
  func createTLSCert(ts TLS, hosts string) (key []byte, cert []byte, err error) { 	 
-	 csrData, key, err := crypt.CreateKeyPairAndCertificateRequest("CMS", hosts, ts.Config.KeyAlgorithm, ts.Config.KeyAlgorithmLength)
+	 csrData, key, err := crypt.CreateKeyPairAndCertificateRequest(pkix.Name{
+		 Country:            []string{constants.DefaultCountry},
+		 Organization:       []string{constants.DefaultOrganization},
+		 Locality:           []string{constants.DefaultLocality},
+		 Province:           []string{constants.DefaultProvince},
+		 CommonName:         "CMS",
+	 }, hosts, ts.Config.KeyAlgorithm, ts.Config.KeyAlgorithmLength)
 	 if err != nil {
 		return nil, nil, err
 	 }
