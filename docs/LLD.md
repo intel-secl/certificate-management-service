@@ -159,9 +159,9 @@ The daemon will create and use the following files on the OS:
 3. /var/lib/cms/* (misc files)
 4. /etc/cms/config.yml (Configuration)
 5. /usr/\*/bin/cms(executable binary)
-6. /var/lib/cms/root-ca-key.pem (Root CA key)
+6. /var/lib/cms/root-ca.key (Root CA key)
 7. /var/lib/cms/root-ca-cert.pem (Root CA cert)
-8. /var/lib/cms/tls-key.pem (TLS key)
+8. /var/lib/cms/tls.key (TLS key)
 9. /var/lib/cms/tls-cert.pem (TLS cert)
 
 ## Container Installation

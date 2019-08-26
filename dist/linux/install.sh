@@ -24,9 +24,6 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-echo "Setting up Certificate Management Service Linux User..."
-id -u cms 2> /dev/null || useradd cms
-
 echo "Installing Certificate Management Service..."
 
 COMPONENT_NAME=cms
@@ -35,6 +32,9 @@ BIN_PATH=$PRODUCT_HOME/bin
 DB_SCRIPT_PATH=$PRODUCT_HOME/cacerts
 LOG_PATH=/var/log/$COMPONENT_NAME/
 CONFIG_PATH=/etc/$COMPONENT_NAME
+
+echo "Setting up Certificate Management Service Linux User..."
+id -u cms 2> /dev/null || useradd --comment "Certificate Management Service" --home $PRODUCT_HOME --system --shell /bin/false cms
 
 mkdir -p $BIN_PATH && chown cms:cms $BIN_PATH/
 cp $COMPONENT_NAME $BIN_PATH/ && chown cms:cms $BIN_PATH/*
