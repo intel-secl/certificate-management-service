@@ -17,7 +17,7 @@ import (
 
 //ValidateCertificateRequest is used to validate the Certificate Signing Request
 func ValidateCertificateRequest(conf *config.Configuration, csr *x509.CertificateRequest, certType string,
-	 ctxMap *map[string]*types.RoleInfo) error {
+	 ctxMap *map[string]types.RoleInfo) error {
 
 	if csr.SignatureAlgorithm != x509.SHA384WithRSA {
 		log.Errorf("Incorrect Signature Algorithm used (should be SHA 384 with RSA): %v", csr.SignatureAlgorithm)
