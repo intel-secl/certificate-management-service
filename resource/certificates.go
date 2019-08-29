@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"regexp"
 	v "intel/isecl/lib/common/validation"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -78,6 +79,15 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		fmt.Println("Cannot read http request body")
 		httpWriter.Write([]byte("Cannot read http request body"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	re := regexp.MustCompile(`\r?\n`)
+	err = v.ValidatePemEncodedKey(re.ReplaceAllString(string(responseBodyBytes),""))
+	if err != nil {
+		log.Errorf("Invalid certificate signing request : %v", err)
+		httpWriter.WriteHeader(http.StatusBadRequest)
+		httpWriter.Write([]byte("Invalid certificate signing request provided"))
 		return
 	}
 

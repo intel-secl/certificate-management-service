@@ -8,9 +8,9 @@ import (
 	"intel/isecl/cms/constants"
 	"intel/isecl/cms/config"
 	"net/http"
-
+        "regexp"
 	"io/ioutil"
-
+	"intel/isecl/lib/common/validation"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -35,6 +35,16 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 		httpWriter.Write([]byte("Cannot read from Root CA certificate file"))
 		return
 	}
+
+	re := regexp.MustCompile(`\r?\n`)
+	err = validation.ValidatePemEncodedKey(re.ReplaceAllString(string(rootCACertificateBytes), ""))
+	if err != nil {
+		log.Errorf("Invalid Root CA certificate in file: %v", err)
+		httpWriter.WriteHeader(http.StatusInternalServerError)
+		httpWriter.Write([]byte("Invalid Root CA certificate"))
+		return
+	}
+
 	httpWriter.Header().Set("Content-Type", "application/x-pem-file")
 	httpWriter.WriteHeader(http.StatusOK)
 	httpWriter.Write(rootCACertificateBytes)
