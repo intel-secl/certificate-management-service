@@ -69,7 +69,7 @@ func (c *Configuration) Save() error {
 		if os.IsNotExist(err) {
 			// error is that the config doesnt yet exist, create it
 			file, err = os.Create(c.configFile)
-			os.Chmod(c.configFile, 0660)
+			os.Chmod(c.configFile, 0440)
 			if err != nil {
 				return err
 			}
