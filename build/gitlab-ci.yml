@@ -1,4 +1,4 @@
-image: golang:latest
+image: golang:1.11
 
 before_script:
   - echo "Acquire::http::Proxy \"http://proxy-us.intel.com:911\";" >> /etc/apt/apt.conf
