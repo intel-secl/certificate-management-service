@@ -143,9 +143,12 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	if strings.EqualFold(certType, "TLS") {
 		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageContentCommitment
 		clientCRTTemplate.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}
-	} else if strings.EqualFold(certType, "Flavor-Signing") {
+	} else if strings.EqualFold(certType, "Flavor-Signing") || strings.EqualFold(certType, "JWT-Signing") || strings.EqualFold(certType, "Signing") {
 		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageContentCommitment
-	} else if strings.EqualFold(certType, "JWT-Signing") {
+	} else if strings.EqualFold(certType, "TLS-Client") {
+		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageContentCommitment
+		clientCRTTemplate.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
+	} else if strings.EqualFold(certType, "Signing-CA") {
 		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageContentCommitment
 	} else {
 		log.Errorf("Invalid certType provided")
