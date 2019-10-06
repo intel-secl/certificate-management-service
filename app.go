@@ -230,6 +230,7 @@ func (a *App) Run(args []string) error {
 		}
 		if args[2] != "tls" &&
 			args[2] != "root_ca" &&
+			args[2] != "intermediate_ca" &&
 			args[2] != "server" &&
 			args[2] != "cms_auth_token" &&
 			args[2] != "all" {
@@ -252,6 +253,11 @@ func (a *App) Run(args []string) error {
 					ConsoleWriter: os.Stdout,
 				},
 				tasks.Root_Ca{
+					Flags:            flags,
+					ConsoleWriter:    os.Stdout,
+					Config:           a.configuration(),
+				},
+				tasks.Intermediate_Ca{
 					Flags:            flags,
 					ConsoleWriter:    os.Stdout,
 					Config:           a.configuration(),
@@ -341,7 +347,9 @@ func (a *App) startServer() error {
 	}(resource.SetVersion, resource.SetCACertificates)
 
 	sr = r.PathPrefix("/cms/v1/certificates").Subrouter()
-	sr.Use(middleware.NewTokenAuth(constants.TrustedJWTSigningCertsDir, constants.ConfigDir, a.fnGetJwtCerts))
+	sr.Use(middleware.NewTokenAuth(constants.TrustedJWTSigningCertsDir,
+		constants.ConfigDir, a.fnGetJwtCerts,
+		time.Minute*constants.DefaultJwtValidateCacheKeyMins))
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
 			s(sr,c)
@@ -494,6 +502,9 @@ func validateSetupArgs(cmd string, args []string) error {
 		return nil
 
 	case "root_ca":
+		return nil
+
+	case "intermediate_ca":
 		return nil
 
 	case "tls":

@@ -14,6 +14,6 @@ require (
 	intel/isecl/lib/common v1.0.0-Beta
 )
 
-replace intel/isecl/lib/common => gitlab.devtools.intel.com/sst/isecl/lib/common.git v0.0.0-20190916071549-04625ad42e3a
+replace intel/isecl/lib/common => gitlab.devtools.intel.com/sst/isecl/lib/common.git v0.0.0-20191004192529-c4a1171a5ec2
 
-replace intel/isecl/authservice => gitlab.devtools.intel.com/sst/isecl/authservice.git v0.0.0-20190923205303-dc3e362dbd54
+replace intel/isecl/authservice => gitlab.devtools.intel.com/sst/isecl/authservice.git v0.0.0-20191006164949-962eb84a0210

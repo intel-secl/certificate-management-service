@@ -7,7 +7,6 @@
  import (
 	 "crypto/rand"
 	 "crypto/x509"
-	 "crypto/tls"
 	 "crypto/x509/pkix"
 	 "errors"
 	 "flag"
@@ -43,7 +42,7 @@
 	 return (conn.LocalAddr().(*net.UDPAddr)).IP.String(), nil
  }
  
- func createTLSCert(ts TLS, hosts string) (key []byte, cert []byte, err error) { 	 
+ func createTLSCert(ts TLS, hosts string, ca *x509.Certificate, caKey interface{}) (key []byte, cert []byte, err error) {
 	 csrData, key, err := crypt.CreateKeyPairAndCertificateRequest(pkix.Name{
 		 Country:            []string{constants.DefaultCountry},
 		 Organization:       []string{constants.DefaultOrganization},
@@ -64,7 +63,11 @@
 	 if err != nil {
 		return nil, nil, err
 	}
-	RootCertificateTemplate := GetRootCACertDefaultTemplate(ts.Config)
+	
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not create TLS cert - error while trying to load TLS issuing CA cert and key - err: %v", err)
+	}
+
 	 clientCRTTemplate := x509.Certificate{
         Signature:          clientCSR.Signature,
         SignatureAlgorithm: clientCSR.SignatureAlgorithm,
@@ -76,7 +79,7 @@
 		DNSNames:           clientCSR.DNSNames,
 
         SerialNumber: serialNumber,
-        Issuer:       RootCertificateTemplate.Issuer,
+        Issuer:       ca.Issuer,
         Subject:      clientCSR.Subject,
         NotBefore:    time.Now(),
         NotAfter:     time.Now().AddDate(1, 0, 0),
@@ -84,11 +87,7 @@
         ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 	 }
 
-	rootKeyPair, err := tls.LoadX509KeyPair(constants.RootCACertPath, constants.RootCAKeyPath)
-	 if err != nil {
-		 return
-	 }
-	cert, err = x509.CreateCertificate(rand.Reader, &clientCRTTemplate, &RootCertificateTemplate, clientCSR.PublicKey, rootKeyPair.PrivateKey)
+	cert, err = x509.CreateCertificate(rand.Reader, &clientCRTTemplate, ca, clientCSR.PublicKey, caKey)
     if err != nil {
         return nil, nil, err
     }
@@ -122,8 +121,10 @@
 				 return valid_err
 			 }
 		 }
-		 
-		 key, cert, err := createTLSCert(ts, *host)
+
+		 tlsCaAttr := constants.GetCaAttribs(constants.Tls)
+		 tlsCaCert, tlsCaPrivKey, err := crypt.LoadX509CertAndPrivateKey(tlsCaAttr.CertPath, tlsCaAttr.KeyPath)
+		 key, cert, err := createTLSCert(ts, *host, tlsCaCert, tlsCaPrivKey)
 		 if err != nil {
 			 return fmt.Errorf("tls setup: %v", err)
 		 }
@@ -131,10 +132,12 @@
 		 if err != nil {
 			return fmt.Errorf("tls setup: %v", err)
 		}
-		 err = crypt.SavePemCert(cert, constants.TLSCertPath)
+		 // we need to store the TLS cert as a chain since Web server should send the
+		 // entire certificate chain minus the root
+		 err = crypt.SavePemCertChain(constants.TLSCertPath, cert, tlsCaCert.Raw)
 		 if err != nil {
 			return fmt.Errorf("tls setup: %v", err)
-		}
+		 }
 	 } else {
 		 fmt.Println("TLS already configured, skipping")
 	 }

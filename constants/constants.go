@@ -7,50 +7,52 @@ package constants
 import "crypto"
 
 const (
-	ServiceName                   = "CMS"
-	HomeDir                       = "/opt/cms/"
-	ConfigDir                     = "/etc/cms/"
-	ExecutableDir                 = "/opt/cms/bin/"
-	ExecLinkPath                  = "/usr/bin/cms"
-	RunDirPath                    = "/run/cms"
-	LogDir                        = "/var/log/cms/"
-	LogFile                       = "cms.log"
-	HTTPLogFile                   = "http.log"
-	ConfigFile                    = "config.yml"
-	TokenKeyFile                  = "cms-jwt.key"
-	TrustedJWTSigningCertsDir     = ConfigDir + "jwt/"
-	RootCADirPath		      = ConfigDir + "root-ca/"
-	RootCACertPath                = RootCADirPath + "root-ca-cert.pem"
-	RootCAKeyPath                 = ConfigDir + "root-ca.key"
-	TLSCertPath                   = ConfigDir + "tls-cert.pem"
-	TLSKeyPath                    = ConfigDir + "tls.key"
-	SerialNumberPath              = ConfigDir + "serial-number"	
-	TokenSignKeysAndCertDir       = ConfigDir + "certs/tokensign/"
-	TokenSignKeyFile              = TokenSignKeysAndCertDir + "key.key"
-	TokenSignCertFile             = TokenSignKeysAndCertDir + "jwtsigncert.pem"
-	PIDFile                       = "cms.pid"
-	ServiceRemoveCmd              = "systemctl disable cms"
-	HashingAlgorithm              = crypto.SHA384
-	PasswordRandomLength          = 20
-	DefaultHeartbeatInt           = 5
-	DefaultAuthDefendMaxAttempts  = 5
-	DefaultAuthDefendIntervalMins = 5
-	DefaultAuthDefendLockoutMins  = 15
-	DefaultSSLCertFilePath        = ConfigDir + "cms_cert.pem"
-	DefaultRootCACommonName       = "CMSCA"
-	DefaultPort                   = 8445
-	DefaultOrganization           = "INTEL"
-	DefaultCountry                = "US"
-	DefaultProvince               = "SF"
-	DefaultLocality               = "SC"
-	DefaultCACertValidiy          = 5
-	DefaultKeyAlgorithm           = "rsa"
-	DefaultKeyAlgorithmLength     = 3072
-	CertApproverGroupName         = "CertApprover"
-	DefaultAasJwtCn               = "AAS JWT Signing Certificate"	
-	DefaultAasTlsCn               = "AAS TLS Certificate"
-	DefaultAasTlsSan              = "127.0.0.1,localhost"
-	DefaultTokenDurationMins      = 240
+	ServiceName                    = "CMS"
+	HomeDir                        = "/opt/cms/"
+	ConfigDir                      = "/etc/cms/"
+	ExecutableDir                  = "/opt/cms/bin/"
+	ExecLinkPath                   = "/usr/bin/cms"
+	RunDirPath                     = "/run/cms"
+	LogDir                         = "/var/log/cms/"
+	LogFile                        = "cms.log"
+	HTTPLogFile                    = "http.log"
+	ConfigFile                     = "config.yml"
+	TokenKeyFile                   = "cms-jwt.key"
+	TrustedJWTSigningCertsDir      = ConfigDir + "jwt/"
+	RootCADirPath                  = ConfigDir + "root-ca/"
+	RootCACertPath                 = RootCADirPath + "root-ca-cert.pem"
+	RootCAKeyPath                  = ConfigDir + "root-ca.key"
+	IntermediataCADirPath          = ConfigDir + "interimediate-ca/"
+	TLSCertPath                    = ConfigDir + "tls-cert.pem"
+	TLSKeyPath                     = ConfigDir + "tls.key"
+	SerialNumberPath               = ConfigDir + "serial-number"
+	TokenSignKeysAndCertDir        = ConfigDir + "certs/tokensign/"
+	TokenSignKeyFile               = TokenSignKeysAndCertDir + "key.key"
+	TokenSignCertFile              = TokenSignKeysAndCertDir + "jwtsigncert.pem"
+	PIDFile                        = "cms.pid"
+	ServiceRemoveCmd               = "systemctl disable cms"
+	HashingAlgorithm               = crypto.SHA384
+	PasswordRandomLength           = 20
+	DefaultHeartbeatInt            = 5
+	DefaultAuthDefendMaxAttempts   = 5
+	DefaultAuthDefendIntervalMins  = 5
+	DefaultAuthDefendLockoutMins   = 15
+	DefaultSSLCertFilePath         = ConfigDir + "cms_cert.pem"
+	DefaultRootCACommonName        = "CMSCA"
+	DefaultPort                    = 8445
+	DefaultOrganization            = "INTEL"
+	DefaultCountry                 = "US"
+	DefaultProvince                = "SF"
+	DefaultLocality                = "SC"
+	DefaultCACertValidiy           = 5
+	DefaultKeyAlgorithm            = "rsa"
+	DefaultKeyAlgorithmLength      = 3072
+	CertApproverGroupName          = "CertApprover"
+	DefaultAasJwtCn                = "AAS JWT Signing Certificate"
+	DefaultAasTlsCn                = "AAS TLS Certificate"
+	DefaultAasTlsSan               = "127.0.0.1,localhost"
+	DefaultTokenDurationMins       = 240
+	DefaultJwtValidateCacheKeyMins = 60
 )
 
 // State represents whether or not a daemon is running or not
@@ -62,3 +64,35 @@ const (
 	// Running means the daemon is active
 	Running State = true
 )
+
+type CaAttrib struct {
+	CommonName string
+	CertPath   string
+	KeyPath    string
+}
+
+const (
+	Root      = "root"
+	Tls       = "TLS"
+	TlsClient = "TLS-Client"
+	Signing   = "Signing"
+)
+
+var mp = map[string]CaAttrib{
+	Root:      {"CMSCA", RootCADirPath + "root-ca-cert.pem", ConfigDir + "root-ca.key"},
+	Tls:       {"CMS TLS CA", IntermediataCADirPath + "tls-ca.pem", IntermediataCADirPath + "tls-ca.key"},
+	TlsClient: {"CMS TLS Client CA", IntermediataCADirPath + "tls-client-ca.pem", IntermediataCADirPath + "tls-client-ca.key"},
+	Signing:   {"CMS Signing CA", IntermediataCADirPath + "signing-ca.pem", IntermediataCADirPath + "signing-ca.key"},
+}
+
+func GetIntermediateCAs() []string {
+	return []string{Tls, TlsClient, Signing}
+}
+
+func GetCaAttribs(t string) CaAttrib {
+
+	if val, found := mp[t]; found {
+		return val
+	}
+	return CaAttrib{}
+}

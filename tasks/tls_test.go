@@ -38,8 +38,9 @@ func TestTlsCertCreation(t *testing.T) {
 		Flags:         []string{""},
 		ConsoleWriter: os.Stdout,
 		Config: c,
-	}
-	keyData, certData, err := createTLSCert(ts, "intel.com")
+        }
+        //TODO: need to fix this test. New parameters.. need to pass in issuing CA cert and key
+	keyData, certData, err := createTLSCert(ts, "intel.com", nil, nil)
 	assert.NoError(err)
 	_, err = x509.ParsePKCS8PrivateKey(keyData)
 	assert.NoError(err)

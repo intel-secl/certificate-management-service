@@ -8,6 +8,7 @@ import (
 	"intel/isecl/lib/common/middleware"
 	"intel/isecl/cms/config"
 	"github.com/gorilla/mux"
+	"time"
 )
 
 func mockRetrieveJWTSigningCerts() error {
@@ -19,7 +20,7 @@ func setupRouter() *mux.Router {
 
 	r := mux.NewRouter()
 	sr := r.PathPrefix("/cms/v1/certificates").Subrouter()
-	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", mockRetrieveJWTSigningCerts))
+	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", mockRetrieveJWTSigningCerts, time.Hour*1))
 	c := config.Configuration{}
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
@@ -28,7 +29,7 @@ func setupRouter() *mux.Router {
 	}(SetCertificates)
 
 	sr = r.PathPrefix("/cms/v1").Subrouter()
-	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", mockRetrieveJWTSigningCerts))
+	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", mockRetrieveJWTSigningCerts, time.Hour*1))
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
 			s(sr,&c)

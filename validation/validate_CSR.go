@@ -19,6 +19,7 @@ import (
 func ValidateCertificateRequest(conf *config.Configuration, csr *x509.CertificateRequest, certType string,
 	 ctxMap *map[string]types.RoleInfo) error {
 
+	// TODO: We should be able to support other signature algorithms... such as ECDSA with SHA384
 	if csr.SignatureAlgorithm != x509.SHA384WithRSA {
 		log.Errorf("Incorrect Signature Algorithm used (should be SHA 384 with RSA): %v", csr.SignatureAlgorithm)
 		return errors.New("Incorrect Signature Algorithm used (should be SHA 384 with RSA)")
@@ -28,6 +29,10 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 	cnSanMapFromToken := make(map[string]string)
 	cnTypeMapFromToken := make(map[string]string)
 
+	// TODO: There is a problem here. We could have someone that has a role where the common name matches because they
+	// want to obtain different type of certificates with the same common name. We are breaking out the loop below
+	// when we find the first match with the common name. We should be looking for roles that matches the tuplet from CSR
+	// common name, cert type and SAN List (if applicable). Need to re-order logic
 	for k,_  := range *ctxMap {
 		params := strings.Split(k, ";")		
 		if len(params) < 3 {
