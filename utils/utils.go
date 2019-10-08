@@ -12,6 +12,7 @@ import (
 	"os"
 	"intel/isecl/cms/constants"
 	log "github.com/sirupsen/logrus"
+	"strings"
 )
 
 func Message(status bool, message string) map[string]interface{} {
@@ -25,7 +26,11 @@ func Respond(w http.ResponseWriter, data map[string]interface{}) {
 
 func GetNextSerialNumber() (*big.Int, error) {
 	serialNumberNew, err := ReadSerialNumber()
-	if err != nil {		
+	if err != nil && strings.Contains(err.Error(),"no such file") {
+		serialNumberNew = big.NewInt(0)
+		err = WriteSerialNumber(serialNumberNew)
+		return serialNumberNew, err
+	} else if err != nil {
 		return nil, err
 	} else {	
 		serialNumberNew = serialNumberNew.Add(serialNumberNew, big.NewInt(1))

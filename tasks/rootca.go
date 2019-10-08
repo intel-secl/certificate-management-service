@@ -19,7 +19,6 @@
 	 "intel/isecl/lib/common/crypt"
 	 "io"
 	 "io/ioutil"
-	 "math/big"	 
 	 "os"
 	 "time"	 
  )
@@ -30,8 +29,8 @@
 	 Config           *config.Configuration
  }
 
- func GetCACertDefaultTemplate(cfg *config.Configuration, cn string, parent string) (x509.Certificate) {
-	return x509.Certificate{	
+ func GetCACertDefaultTemplate(cfg *config.Configuration, cn string, parent string) (x509.Certificate, error) {
+	tmplt := x509.Certificate{
 		Subject: pkix.Name{
 			CommonName:   cn,
 			Organization: []string {cfg.Organization},
@@ -45,16 +44,17 @@
 		NotBefore: time.Now(),
 		NotAfter: time.Now().AddDate(cfg.CACertValidity, 0, 0),
 
-		SerialNumber:          big.NewInt(0),
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
 	 };
+	 serialNumber, err := utils.GetNextSerialNumber()
+	 tmplt.SerialNumber = serialNumber
+	 return tmplt, err
  }
 
  func getCACertTemplate(cfg *config.Configuration, cn string, parCn string,  pubKey crypto.PublicKey, ) (x509.Certificate, error) {
-	tmplt := GetCACertDefaultTemplate(cfg, cn, parCn)
-	err := utils.WriteSerialNumber(tmplt.SerialNumber)
+	tmplt, err := GetCACertDefaultTemplate(cfg, cn, parCn)
 	if err != nil {
 		return tmplt, err
 	}
