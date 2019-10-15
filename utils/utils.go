@@ -31,6 +31,7 @@ func GetNextSerialNumber() (*big.Int, error) {
 		err = WriteSerialNumber(serialNumberNew)
 		return serialNumberNew, err
 	} else if err != nil {
+		log.Errorf("Cannot read from Serial Number file: %v", err)
 		return nil, err
 	} else {	
 		serialNumberNew = serialNumberNew.Add(serialNumberNew, big.NewInt(1))
@@ -45,7 +46,6 @@ func GetNextSerialNumber() (*big.Int, error) {
 func ReadSerialNumber() (*big.Int, error) {	
 	sn, err := ioutil.ReadFile(constants.SerialNumberPath)
 	if err != nil {
-		log.Errorf("Cannot read from Serial Number file: %v", err)
 		return nil, err
 	} else {	
 		var serialNumber = big.NewInt(0)
