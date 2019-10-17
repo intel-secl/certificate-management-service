@@ -7,10 +7,10 @@ package resource
 import (
 	"intel/isecl/cms/constants"
 	"intel/isecl/cms/config"
+	"fmt"
+	"strings"
 	"net/http"
-        "regexp"
 	"io/ioutil"
-	"intel/isecl/lib/common/validation"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -28,26 +28,34 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 		return
 	}
 
-	rootCACertificateBytes, err := ioutil.ReadFile(constants.RootCACertPath)
+	issuingCa := httpRequest.URL.Query().Get("issuingCa")
+	caCertificateBytes, err := getCaCert(issuingCa)
 	if err != nil {
-		log.Errorf("Cannot read from Root CA certificate file: %v", err)
-		httpWriter.WriteHeader(http.StatusInternalServerError)
-		httpWriter.Write([]byte("Cannot read from Root CA certificate file"))
+		log.Errorf("Cannot load Issuing CA: %v", err)
+		if strings.Contains(err.Error(), "Invalid Query parameter") {
+			httpWriter.WriteHeader(http.StatusBadRequest)
+			httpWriter.Write([]byte("Invalid Query parameter issuing CA: "+ issuingCa))
+		} else {
+			httpWriter.WriteHeader(http.StatusInternalServerError)
+			httpWriter.Write([]byte("Cannot load Issuing CA"))
+		}
 		return
 	}
-
-	re := regexp.MustCompile(`\r?\n`)
-	err = validation.ValidatePemEncodedKey(re.ReplaceAllString(string(rootCACertificateBytes), ""))
-	if err != nil {
-		log.Errorf("Invalid Root CA certificate in file: %v", err)
-		httpWriter.WriteHeader(http.StatusInternalServerError)
-		httpWriter.Write([]byte("Invalid Root CA certificate"))
-		return
-	}
-
 	httpWriter.Header().Set("Content-Type", "application/x-pem-file")
 	httpWriter.WriteHeader(http.StatusOK)
-	httpWriter.Write(rootCACertificateBytes)
+	httpWriter.Write(caCertificateBytes)
 	return
+}
 
+func getCaCert(issuingCa string) ([]byte, error) {
+	if (issuingCa == "") {
+		return ioutil.ReadFile(constants.RootCACertPath)
+	} else {
+		attr := constants.GetCaAttribs(issuingCa)
+		if attr.CommonName == "" {
+			return nil, fmt.Errorf("Invalid Query parameter issuingCa: %s", issuingCa)
+		} else {
+			return ioutil.ReadFile(attr.CertPath)
+		}
+	}
 }

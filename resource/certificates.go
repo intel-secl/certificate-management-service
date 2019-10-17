@@ -63,14 +63,14 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	// able to set up the router so that we have the type in the path.
 	certType := httpRequest.URL.Query().Get("certType")
 	if (certType == "") {
-		log.Errorf("Accept type not supported")
+		log.Errorf("Query parameter certType missing")
 		httpWriter.Write([]byte("Query parameter certType missing"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	certTypeVal := []string{certType}
 	if validateErr := v.ValidateStrings(certTypeVal); validateErr != nil {
-		log.Errorf("Accept type not supported")
+		log.Errorf("Query parameter certType is in invalid format")
 		httpWriter.Write([]byte("Query parameter certType is in invalid format"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		return
