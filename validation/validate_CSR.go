@@ -6,23 +6,26 @@ package validation
 
 import (
 	"crypto/x509"
-	"errors"
-
+	"fmt"
 	"strings"
 	"net"
 	"intel/isecl/cms/config"
+	"github.com/pkg/errors"
 	types "intel/isecl/lib/common/types/aas"
-	log "github.com/sirupsen/logrus"
+	clog "intel/isecl/lib/common/log"
 )
+var log = clog.GetDefaultLogger()
+var slog = clog.GetSecurityLogger()
 
 //ValidateCertificateRequest is used to validate the Certificate Signing Request
 func ValidateCertificateRequest(conf *config.Configuration, csr *x509.CertificateRequest, certType string,
 	 ctxMap *map[string]types.RoleInfo) error {
+	log.Trace("validation/validate_CSR:ValidateCertificateRequest() Entering")
+	defer log.Trace("validation/validate_CSR:ValidateCertificateRequest() Leaving")
 
 	// TODO: We should be able to support other signature algorithms... such as ECDSA with SHA384
 	if csr.SignatureAlgorithm != x509.SHA384WithRSA {
-		log.Errorf("Incorrect Signature Algorithm used (should be SHA 384 with RSA): %v", csr.SignatureAlgorithm)
-		return errors.New("Incorrect Signature Algorithm used (should be SHA 384 with RSA)")
+		return fmt.Errorf("validation/validate_CSR:ValidateCertificateRequest() Incorrect Signature Algorithm used (should be SHA 384 with RSA): %v", csr.SignatureAlgorithm)
 	}
 
 	// Validate CN
@@ -42,7 +45,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 			cnSanMapFromToken[params[0]] = params[1]
 			cnTypeMapFromToken[params[0]] = params[2]		
 		}
-		log.Debug("Common Name in Token : " + params[0])		
+		log.Debug("validation/validate_CSR:ValidateCertificateRequest() Common Name in Token : " + params[0])
 	}
 	subjectsFromCsr := strings.Split(csr.Subject.String(), ",")
 	subjectFromCsr := ""
@@ -54,36 +57,39 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 		}
 	}
 	
-	log.Debug("Common Name in CSR : " + csr.Subject.String())		
+	log.Debug("validation/validate_CSR:ValidateCertificateRequest() Common Name in CSR : " + csr.Subject.String())		
 	if sanlistFromToken, ok := cnSanMapFromToken[subjectFromCsr]; ok {
-		log.Debug("Got valid Common Name in CSR : " + csr.Subject.String())		
+		log.Info("validation/validate_CSR:ValidateCertificateRequest() Got valid Common Name in CSR : " + csr.Subject.String())		
 		if sanlistFromToken != "" {
+			log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list requested in token - %v ", sanlistFromToken)
 			sans := strings.Split(sanlistFromToken, "=")
 			if len(sans) > 1 {	
 				tokenSanList := strings.Split(sans[1], ",")	
+				log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(IP) requested in CSR - %v ", csr.IPAddresses)
+				log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(DNS) requested in CSR - %v ", csr.DNSNames)
 				for _, san := range tokenSanList {				
 					if !ipInSlice(san, csr.IPAddresses) && !stringInSlice(san, csr.DNSNames) {
-						log.Errorf("No role associated with provided SAN list in CSR")		
-						return errors.New("No role associated with provided SAN list in CSR")
+						return errors.New("validation/validate_CSR:ValidateCertificateRequest() No role associated with provided SAN list in CSR")
 					}
 				}		
 			}					
-			log.Debug(sanlistFromToken)
 		}
 	} else {
-		log.Errorf("No role associated with provided Common Name in CSR")		
-		return errors.New("No role associated with provided Common Name in CSR")
+		return errors.New("validation/validate_CSR:ValidateCertificateRequest() No role associated with provided Common Name in CSR")
 	}
 
 	if certTypeFromToken, _ := cnTypeMapFromToken[subjectFromCsr]; !strings.EqualFold("CERTTYPE=" + certType, certTypeFromToken) {
-		log.Errorf("No role associated with provided Certificate Type in request - " + certType)
-		return errors.New("No role associated with provided Certificate Type")
+		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() Certificate Type in token - %v ", certTypeFromToken)	
+		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() Certificate Type in request - %v ", certType)	
+		return fmt.Errorf("validation/validate_CSR:ValidateCertificateRequest() No role associated with provided Certificate Type in request - %v", certType)
 	}	
 	return nil
 }
 
 
 func stringInSlice(str string, list []string) bool {
+	log.Trace("validation/validate_CSR:stringInSlice() Entering")
+	defer log.Trace("validation/validate_CSR:stringInSlice() Leaving")
 	for _, v := range list {
 		if strings.EqualFold(v,str) {
 			return true
@@ -94,6 +100,8 @@ func stringInSlice(str string, list []string) bool {
 
 
 func ipInSlice(h string, list []net.IP) bool {
+	log.Trace("validation/validate_CSR:ipInSlice() Entering")
+	defer log.Trace("validation/validate_CSR:ipInSlice() Leaving")
 	for _, v := range list {
 		if ip := net.ParseIP(h); ip != nil {		
 			if strings.EqualFold(v.String(), h) {

@@ -11,8 +11,8 @@ import (
 	"io/ioutil"
 	"os"
 	"intel/isecl/cms/constants"
-	log "github.com/sirupsen/logrus"
 	"strings"
+	"github.com/pkg/errors"
 )
 
 func Message(status bool, message string) map[string]interface{} {
@@ -29,15 +29,14 @@ func GetNextSerialNumber() (*big.Int, error) {
 	if err != nil && strings.Contains(err.Error(),"no such file") {
 		serialNumberNew = big.NewInt(0)
 		err = WriteSerialNumber(serialNumberNew)
-		return serialNumberNew, err
+		return serialNumberNew, errors.Wrap(err, "utils/utils:GetNextSerialNumber() Cannot write to Serial Number file")
 	} else if err != nil {
-		log.Errorf("Cannot read from Serial Number file: %v", err)
-		return nil, err
+		return nil, errors.Wrap(err, "utils/utils:GetNextSerialNumber() Cannot read from Serial Number file")
 	} else {	
 		serialNumberNew = serialNumberNew.Add(serialNumberNew, big.NewInt(1))
 		err = WriteSerialNumber(serialNumberNew)
 		if err != nil {
-			log.Errorf("Cannot write to Serial Number file")
+			return nil, errors.Wrap(err, "utils/utils:GetNextSerialNumber() Cannot write to Serial Number file")
 		}
 		return serialNumberNew, nil
 	}	
@@ -46,7 +45,7 @@ func GetNextSerialNumber() (*big.Int, error) {
 func ReadSerialNumber() (*big.Int, error) {	
 	sn, err := ioutil.ReadFile(constants.SerialNumberPath)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "utils/utils:ReadSerialNumber() Could not read serial number")
 	} else {	
 		var serialNumber = big.NewInt(0)
 		serialNumber.SetBytes(sn)
@@ -56,10 +55,9 @@ func ReadSerialNumber() (*big.Int, error) {
 
 func WriteSerialNumber(serialNumber *big.Int) error {	
 	err := ioutil.WriteFile(constants.SerialNumberPath, serialNumber.Bytes(), 0660)
-	os.Chmod(constants.SerialNumberPath, 0660) //As ioutils is not able to set right permissions above
+	os.Chmod(constants.SerialNumberPath, 0660)
 	if err != nil {
-		log.Errorf("Failed to write serial-number to file: %s", err)
-		return err		
+		return errors.Wrap(err, "utils/utils:WriteSerialNumber() Failed to write serial-number to file")		
 	}
 	return nil
 }

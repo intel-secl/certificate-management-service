@@ -13,12 +13,19 @@ import (
 )
 
 func SetVersion(r *mux.Router, config *config.Configuration) {
+	log.Trace("resource/version:SetVersion() Entering")
+	defer log.Trace("resource/version:SetVersion() Leaving")
+
 	r.Handle("/version", getVersion()).Methods("GET")
 }
 
 func getVersion() http.HandlerFunc {
+	log.Trace("resource/version:getVersion() Entering")
+	defer log.Trace("resource/version:getVersion() Leaving")
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		verStr := fmt.Sprintf("%s-%s", version.Version, version.GitHash)
+		log.Debugf("resource/version:getVersion() CMS version : %v", verStr)
 		w.Write([]byte(verStr))
 	})
 }

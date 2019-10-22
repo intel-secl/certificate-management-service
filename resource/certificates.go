@@ -7,8 +7,7 @@ package resource
 import (
 	"crypto/rand"
 	"crypto/x509"
-	"encoding/pem"
-	"fmt"
+	"encoding/pem"	
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/constants"
 	"intel/isecl/lib/common/crypt"
@@ -21,14 +20,15 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"regexp"
 	v "intel/isecl/lib/common/validation"
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 )
 
 // SetCertificates is used to set the endpoints for certificate handling APIs
 func SetCertificates(router *mux.Router, config *config.Configuration) {
+	log.Trace("resource/certificates:SetCertificates() Entering")
+	defer log.Trace("resource/certificates:SetCertificates() Leaving")
+
 	router.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		GetCertificates(w, r, config)
 	}).Methods("POST")
@@ -36,8 +36,13 @@ func SetCertificates(router *mux.Router, config *config.Configuration) {
 
 //GetCertificates is used to get the JWT Signing/TLS certificate upon JWT valildation
 func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, config *config.Configuration) {
+	log.Trace("resource/certificates:GetCertificates() Entering")
+	defer log.Trace("resource/certificates:GetCertificates() Leaving")
+
 	privileges, err := context.GetUserRoles(httpRequest)
 	if err != nil {
+		slog.WithError(err).Warn("resource/certificates:GetCertificates() Failed to read roles and permissions")
+		slog.Tracef("%+v",err)
 		httpWriter.WriteHeader(http.StatusInternalServerError)
 		httpWriter.Write([]byte("Could not get user roles from http context"))
 		return
@@ -52,7 +57,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	}
 
 	if httpRequest.Header.Get("Accept") != "application/x-pem-file" || httpRequest.Header.Get("Content-Type") != "application/x-pem-file" {
-		log.Errorf("Accept type not supported")
+		slog.Warn("resource/certificates:GetCertificates() Accept type not supported")
 		httpWriter.WriteHeader(http.StatusNotAcceptable)
 		httpWriter.Write([]byte("Accept type not supported"))
 		return
@@ -63,14 +68,14 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	// able to set up the router so that we have the type in the path.
 	certType := httpRequest.URL.Query().Get("certType")
 	if (certType == "") {
-		log.Errorf("Query parameter certType missing")
+		log.Error("resource/certificates:GetCertificates() Query parameter certType missing")
 		httpWriter.Write([]byte("Query parameter certType missing"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	certTypeVal := []string{certType}
 	if validateErr := v.ValidateStrings(certTypeVal); validateErr != nil {
-		log.Errorf("Query parameter certType is in invalid format")
+		log.Error("resource/certificates:GetCertificates() Query parameter certType is in invalid format")
 		httpWriter.Write([]byte("Query parameter certType is in invalid format"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		return
@@ -78,29 +83,15 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 
 	responseBodyBytes, err := ioutil.ReadAll(httpRequest.Body)
 	if err != nil {
-		log.Errorf("Cannot read http request body: %v", err)
-		fmt.Println("Cannot read http request body")
+		log.WithError(err).Error("resource/certificates:GetCertificates() Could not read http request body")
 		httpWriter.Write([]byte("Cannot read http request body"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// TODO: why are we regular expression matching the CSR? This is should be handled below
-	// with the x509.ParseCertificateRequest. If there is a problem with the CSR, it should be
-	// handled there. If our intention here is input validation, we should just check for a
-	// maximum reasonable size
-	re := regexp.MustCompile(`\r?\n`)
-	err = v.ValidatePemEncodedKey(re.ReplaceAllString(string(responseBodyBytes),""))
-	if err != nil {
-		log.Errorf("Invalid certificate signing request : %v", err)
-		httpWriter.WriteHeader(http.StatusBadRequest)
-		httpWriter.Write([]byte("Invalid certificate signing request provided"))
-		return
-	}
-
 	pemBlock, _ := pem.Decode(responseBodyBytes)
 	if pemBlock == nil {
-		log.Errorf("Failed to decode pem: %s", err)
+		log.WithError(err).Error("resource/certificates:GetCertificates() Failed to decode input pem")
 		httpWriter.WriteHeader(http.StatusBadRequest) 
 		httpWriter.Write([]byte("Failed to decode pem" + err.Error()))
 		return
@@ -108,7 +99,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 
 	clientCSR, err := x509.ParseCertificateRequest(pemBlock.Bytes)
 	if err != nil {
-		log.Errorf("Invalid CSR provided: %v", err)
+		log.WithError(err).Error("resource/certificates:GetCertificates() Invalid CSR provided")
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		httpWriter.Write([]byte("Invalid CSR provided: " + err.Error()))
 		return
@@ -116,15 +107,18 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 
 	err = validation.ValidateCertificateRequest(config, clientCSR, certType, ctxMap)
 	if err != nil {
-		log.Errorf("Invalid CSR provided: %v", err)
+		log.WithError(err).Error("resource/certificates:GetCertificates() Invalid CSR provided")
+		log.Tracef("%+v",err)
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		httpWriter.Write([]byte("Invalid CSR provided: " + err.Error()))
 		return
 	}
-
+	log.Debug("resource/certificates:GetCertificates() Received valid CSR")
+	
 	serialNumber, err := utils.GetNextSerialNumber()
 	if err != nil {
-		log.Errorf("Failed to read next Serial Number: %s", err)
+		log.WithError(err).Error("resource/certificates:GetCertificates() Failed to read next Serial Number")
+		log.Tracef("%+v",err)
 		httpWriter.WriteHeader(http.StatusInternalServerError)
 		httpWriter.Write([]byte("Failed to read next Serial Number" + err.Error()))
 		return
@@ -148,7 +142,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	// in the CSR and that the the CN is not in the form of a domain name/ IP address
 
 	var issuingCa string
-
+	log.Debugf("resource/certificates:GetCertificates() Processing CSR with cert type - %v", certType)
 	if strings.EqualFold(certType, "TLS") {
 		issuingCa = constants.Tls
 		clientCRTTemplate.DNSNames =  clientCSR.DNSNames
@@ -166,9 +160,6 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	
 		// TODO: should we be supporting signing CA over REST API? This seems like a dangerous proposition.
 		// This should really be done by an administrator on the console. Not over REST API
-	} else if strings.EqualFold(certType, "Signing-CA") {
-		issuingCa = constants.Root
-		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageContentCommitment
 	} else {
 		log.Errorf("Invalid certType provided")
 		httpWriter.WriteHeader(http.StatusBadRequest)
@@ -179,22 +170,26 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 
 	caCert, caPrivKey, err := crypt.LoadX509CertAndPrivateKey(caAttr.CertPath, caAttr.KeyPath)
 	if err != nil {
-		log.Errorf("cannot load Issuing CA - err : %v", err)
+		log.WithError(err).Error("resource/certificates:GetCertificates() Could not load Issuing CA")
+		log.Tracef("%+v",err)
 		httpWriter.WriteHeader(http.StatusInternalServerError)
 		httpWriter.Write([]byte("Cannot load Issuing CA"))
 	}
 
 	certificate, err := x509.CreateCertificate(rand.Reader, &clientCRTTemplate, caCert, clientCSR.PublicKey, caPrivKey)
 	if err != nil {
-		log.Errorf("cannot create certificate: %v", err)
+		log.WithError(err).Error("resource/certificates:GetCertificates() Cannot create certificate from CSR")
+		log.Tracef("%+v",err)
 		httpWriter.WriteHeader(http.StatusInternalServerError)
 		httpWriter.Write([]byte("Cannot create certificate"))
 	}
+		
 	httpWriter.Header().Add("Content-Type", "application/x-pem-file")
 	httpWriter.WriteHeader(http.StatusOK)
 	// encode the certificate first
 	pem.Encode(httpWriter, &pem.Block{Type: "CERTIFICATE", Bytes: certificate})
 	// include the issuing CA as well since clients would need the entire chain minus the root.
 	pem.Encode(httpWriter, &pem.Block{Type: "CERTIFICATE", Bytes: caCert.Raw})
+	log.Infof("resource/certificates:GetCertificates() Issued certificate for requested CSR with CN - %v", clientCSR.Subject.String())
 	return
 }

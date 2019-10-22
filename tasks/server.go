@@ -5,7 +5,7 @@
 package tasks
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 	"flag"
 	"fmt"
 	"intel/isecl/lib/common/setup"
@@ -21,11 +21,14 @@ type Server struct {
 }
 
 func (s Server) Run(c setup.Context) error {
+	log.Trace("tasks/server:Run() Entering")
+	defer log.Trace("tasks/server:Run() Leaving")
+
 	fmt.Fprintln(s.ConsoleWriter, "Running server setup...")
 	defaultPort, err := c.GetenvInt("CMS_PORT", "Certificate Management Service http port")
 	if err != nil {
 		defaultPort = constants.DefaultPort
-	}
+	}	
 	authServiceUrl, _ := c.GetenvString("AAS_API_URL", "Auth Service http url")
 
 	fs := flag.NewFlagSet("server", flag.ContinueOnError)
@@ -33,13 +36,14 @@ func (s Server) Run(c setup.Context) error {
 	fs.StringVar(&s.Config.AuthServiceUrl, "aas-url", authServiceUrl, "auth service http url")
 	err = fs.Parse(s.Flags)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "tasks/server:Run() Could not parse input flags")
 	}
 	if s.Config.Port > 65535 || s.Config.Port <= 1024 {
-		return errors.New("Invalid or reserved port")
+		return errors.Wrap(err, "tasks/server:Run() Invalid or reserved port")
 	}
+	log.Infof("tasks/server:Run() CMS server trying to start on port -%v", s.Config.Port)
 	fmt.Fprintf(s.ConsoleWriter, "Using HTTPS port: %d\n", s.Config.Port)
-	fmt.Fprintf(s.ConsoleWriter, "service url :%s", authServiceUrl)
+	fmt.Fprintf(s.ConsoleWriter, "Auth Service url :%s", authServiceUrl)
 
 	s.Config.KeyAlgorithm, err = c.GetenvString("CMS_KEY_ALGORITHM", "Certificate Management Service Key Algorithm")
 	if err != nil {
@@ -61,5 +65,8 @@ func (s Server) Run(c setup.Context) error {
 }
 
 func (s Server) Validate(c setup.Context) error {
+	log.Trace("tasks/server:Validate() Entering")
+	defer log.Trace("tasks/server:Validate() Leaving")
+
 	return nil
 }

@@ -4,7 +4,11 @@
  */
 package constants
 
-import "crypto"
+import (
+	"crypto"
+	clog "intel/isecl/lib/common/log"
+)
+var log = clog.GetDefaultLogger()
 
 const (
 	ServiceName                    = "CMS"
@@ -14,7 +18,8 @@ const (
 	ExecLinkPath                   = "/usr/bin/cms"
 	RunDirPath                     = "/run/cms"
 	LogDir                         = "/var/log/cms/"
-	LogFile                        = "cms.log"
+	LogFile                        = LogDir + "cms.log"
+	SecurityLogFile                = LogDir + "cms-security.log"
 	HTTPLogFile                    = "http.log"
 	ConfigFile                     = "config.yml"
 	TokenKeyFile                   = "cms-jwt.key"
@@ -86,10 +91,15 @@ var mp = map[string]CaAttrib{
 }
 
 func GetIntermediateCAs() []string {
+	log.Trace("constants/constants:GetIntermediateCAs() Entering")
+	defer log.Trace("constants/constants:GetIntermediateCAs() Leaving")
+	
 	return []string{Tls, TlsClient, Signing}
 }
 
 func GetCaAttribs(t string) CaAttrib {
+	log.Trace("constants/constants:GetCaAttribs() Entering")
+	defer log.Trace("constants/constants:GetCaAttribs() Leaving")
 
 	if val, found := mp[t]; found {
 		return val

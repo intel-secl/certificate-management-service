@@ -8,7 +8,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"flag"
 	"fmt"
 	"intel/isecl/lib/common/crypt"
@@ -32,9 +31,10 @@ import (
 	"time"
 	"intel/isecl/lib/common/middleware"
 
+	"github.com/pkg/errors"
+    commLog "intel/isecl/lib/common/log"
+    commLogInt "intel/isecl/lib/common/log/setup"
 	stdlog "log"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -121,6 +121,7 @@ func (a *App) executablePath() string {
 	}
 	exec, err := os.Executable()
 	if err != nil {
+		log.WithError(err).Error("app:executablePath() Unable to find CMS executable")
 		// if we can't find self-executable path, we're probably in a state that is panic() worthy
 		panic(err)
 	}
@@ -162,24 +163,57 @@ func (a *App) runDirPath() string {
 	return constants.RunDirPath
 }
 
-func (a *App) configureLogs() {
-	log.SetOutput(io.MultiWriter(os.Stderr, a.logWriter()))
-	log.SetLevel(a.configuration().LogLevel)
+var log = commLog.GetDefaultLogger()
+var slog = commLog.GetSecurityLogger()
 
-	// override golang logger
-	w := log.StandardLogger().WriterLevel(a.configuration().LogLevel)
-	stdlog.SetOutput(w)
+var secLogFile *os.File
+var defaultLogFile *os.File
+
+func (a *App) configureLogs(isStdOut bool, isFileOut bool) {
+	var ioWriterDefault io.Writer
+	ioWriterDefault = defaultLogFile
+	if isStdOut && isFileOut {
+		ioWriterDefault = io.MultiWriter(os.Stdout, defaultLogFile)
+	} else if isStdOut && !isFileOut {
+		ioWriterDefault = os.Stdout
+	}
+
+	ioWriterSecurity := io.MultiWriter(ioWriterDefault, secLogFile)
+	commLogInt.SetLogger(commLog.DefaultLoggerName, a.configuration().LogLevel, nil, ioWriterDefault, false)
+	commLogInt.SetLogger(commLog.SecurityLoggerName, a.configuration().LogLevel, nil, ioWriterSecurity, false)
+
+	slog.Trace("sec log initiated")
+	log.Trace("loggers setup finished")
 }
 
 func (a *App) Run(args []string) error {
-	a.configureLogs()
 
 	if len(args) < 2 {
 		a.printUsage()
 		os.Exit(1)
 	}
+	var err error
+	secLogFile, err = os.OpenFile(constants.SecurityLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
+	if err != nil {
+		log.Errorf("Could not open Security log file")
+	}
+	os.Chmod(constants.SecurityLogFile, 0664)
+	defaultLogFile, err = os.OpenFile(constants.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
+	if err != nil {
+		log.Errorf("Could not open default log file")
+	}
+	os.Chmod(constants.LogFile, 0664)
+
+	defer secLogFile.Close()
+	defer defaultLogFile.Close()
 
 	//bin := args[0]
+	isStdOut := false
+	isCMSConsoleEnabled := os.Getenv("CMS_ENABLE_CONSOLE_LOG")
+	if isCMSConsoleEnabled == "true" {
+		isStdOut = true
+	}
+	a.configureLogs(isStdOut, true)
 	cmd := args[1]
 	switch cmd {
 	default:
@@ -189,7 +223,7 @@ func (a *App) Run(args []string) error {
 		hash, err := crypt.GetCertHexSha384(constants.TLSCertPath)
 		if err != nil {
 			fmt.Println(err.Error())
-			return err
+			return errors.Wrap(err, "app:Run() Could not derive tls certificate digest")
 		}
 		fmt.Println(hash)
 		return nil
@@ -198,7 +232,7 @@ func (a *App) Run(args []string) error {
 			fmt.Fprintln(os.Stderr, "Error: daemon did not start - ", err.Error())
 			// wait some time for logs to flush - otherwise, there will be no entry in syslog
 			time.Sleep(10 * time.Millisecond)
-			return err;
+			return errors.Wrap(err, "app:Run() Error starting CMS service")
 		}
 	case "-help":
 		fallthrough
@@ -219,6 +253,7 @@ func (a *App) Run(args []string) error {
 		flag.CommandLine.BoolVar(&purge, "purge", false, "purge config when uninstalling")
 		flag.CommandLine.Parse(args[2:])
 		a.uninstall(purge)
+		log.Info("app:Run() Uninstalled Certificate Management Service")
 		os.Exit(0)
 	case "version":
 		fmt.Fprintf(a.consoleWriter(), "Certificate Management Service %s-%s\n", version.Version, version.GitHash)
@@ -226,6 +261,7 @@ func (a *App) Run(args []string) error {
 
 		if len(args) <= 2 {
 			a.printUsage()
+			log.Error("app:Run() Invalid command")
 			os.Exit(1)
 		}
 		if args[2] != "tls" &&
@@ -238,9 +274,9 @@ func (a *App) Run(args []string) error {
 			return errors.New("No such setup task")
 		}
 
-		valid_err := validateSetupArgs(args[2], args[3:])
-		if valid_err != nil {
-			return valid_err
+		err := validateSetupArgs(args[2], args[3:])
+		if err != nil {
+			return errors.Wrap(err, "app:Run() Invalid setup task arguments")
 		}
 
 		task := strings.ToLower(args[2])
@@ -275,29 +311,30 @@ func (a *App) Run(args []string) error {
 			},
 			AskInput: false,
 		}
-		var err error
 		if task == "all" {
 			err = setupRunner.RunTasks()
 		} else {
 			err = setupRunner.RunTasks(task)
 		}
 		if err != nil {
-			log.WithError(err).Error("Error running setup")
 			fmt.Println("Error running setup: ", err)
-			return err
+			return errors.Wrap(err, "app:Run() Error running setup")
 		}
 	}
 	return nil
 }
 
 func (a *App) fnGetJwtCerts() error {
+	log.Trace("app:fnGetJwtCerts() Entering")
+	defer log.Trace("app:fnGetJwtCerts() Leaving")
+
 	c := a.configuration()
 	url := c.AuthServiceUrl + "noauth/jwt-certificates"
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("accept", "application/x-pem-file")
 	rootCaCertPems, err := cos.GetDirFileContents(constants.RootCADirPath, "*.pem" )
 	if err != nil {
-		return err
+		return errors.Wrap(err, "app:fnGetJwtCerts() Could not read root CA certificate")
 	}
 
 	// Get the SystemCertPool, continue with an empty pool on error
@@ -321,20 +358,22 @@ func (a *App) fnGetJwtCerts() error {
 	
 	res, err := httpClient.Do(req)
 	if err != nil {
-                return fmt.Errorf("Could not retrieve jwt certificate")
-        }
+		return errors.Wrap(err, "app:fnGetJwtCerts() Could not retrieve jwt certificate")
+    }
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 	err = crypt.SavePemCertWithShortSha1FileName(body, constants.TrustedJWTSigningCertsDir)
 	if err != nil {
-		fmt.Println("Could not store Certificate")
-		return fmt.Errorf("Certificate setup: %v", err)
+		return errors.Wrap(err, "app:fnGetJwtCerts() Could not store Certificate")
 	}
 
 	return nil
 }
 
 func (a *App) startServer() error {
+	log.Trace("app:startServer() Entering")
+	defer log.Trace("app:startServer() Leaving")
+
 	c := a.configuration()
 
 	// Create Router, set routes
@@ -379,51 +418,63 @@ func (a *App) startServer() error {
 		tlsCert := constants.TLSCertPath
 		tlsKey := constants.TLSKeyPath
 		if err := h.ListenAndServeTLS(tlsCert, tlsKey); err != nil {
-			log.WithError(err).Info("Failed to start HTTPS server")
+			log.WithError(err).Info("app:startServer() Failed to start HTTPS server")
 			stop <- syscall.SIGTERM
 		}
 	}()
 
+	log.Info("app:startServer() Certificate Management Service is running")
 	fmt.Fprintln(a.consoleWriter(), "Certificate Management Service is running")
 	// TODO dispatch Service status checker goroutine
 	<-stop
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := h.Shutdown(ctx); err != nil {
-		log.WithError(err).Info("Failed to gracefully shutdown webserver")
-		return err
+		return errors.Wrap(err, "app:startServer() Failed to gracefully shutdown webserver")
 	}
 	return nil
 }
 
 func (a *App) start() error {
+	log.Trace("app:start() Entering")
+	defer log.Trace("app:start() Leaving")
+
 	fmt.Fprintln(a.consoleWriter(), `Forwarding to "systemctl start cms"`)
 	systemctl, err := exec.LookPath("systemctl")
 	if err != nil {
-		return err
+		return errors.Wrap(err, "app:start() Could not locate systemctl to start application service")
 	}
 	return syscall.Exec(systemctl, []string{"systemctl", "start", "cms"}, os.Environ())
 }
 
 func (a *App) stop() error {
+	log.Trace("app:stop() Entering")
+	defer log.Trace("app:stop() Leaving")
+
 	fmt.Fprintln(a.consoleWriter(), `Forwarding to "systemctl stop cms"`)
 	systemctl, err := exec.LookPath("systemctl")
 	if err != nil {
-		return err
+		return errors.Wrap(err, "app:stop() Could not locate systemctl to stop application service")
 	}
 	return syscall.Exec(systemctl, []string{"systemctl", "stop", "cms"}, os.Environ())
 }
 
 func (a *App) status() error {
+	log.Trace("app:status() Entering")
+	defer log.Trace("app:status() Leaving")
+
 	fmt.Fprintln(a.consoleWriter(), `Forwarding to "systemctl status cms"`)
 	systemctl, err := exec.LookPath("systemctl")
 	if err != nil {
-		return err
+		return errors.Wrap(err, "app:status() Could not locate systemctl to check status of application service")
 	}
 	return syscall.Exec(systemctl, []string{"systemctl", "status", "cms"}, os.Environ())
 }
 
 func (a *App) uninstall(purge bool) {
+	log.Trace("app:uninstall() Entering")
+	defer log.Trace("app:uninstall() Leaving")
+
 	fmt.Println("Uninstalling Certificate Management Service")
 	removeService()
 
@@ -465,6 +516,9 @@ func (a *App) uninstall(purge bool) {
 	a.stop()
 }
 func removeService() {
+	log.Trace("app:removeService() Entering")
+	defer log.Trace("app:removeService() Leaving")
+
 	_, _, err := e.RunCommandWithTimeout(constants.ServiceRemoveCmd, 5)
 	if err != nil {
 		fmt.Println("Could not remove Certificate Management Service")
@@ -473,17 +527,19 @@ func removeService() {
 }
 
 func validateCmdAndEnv(env_names_cmd_opts map[string]string, flags *flag.FlagSet) error {
+	log.Trace("app:validateCmdAndEnv() Entering")
+	defer log.Trace("app:validateCmdAndEnv() Leaving")
 
 	env_names := make([]string, 0)
 	for k, _ := range env_names_cmd_opts {
 		env_names = append(env_names, k)
 	}
 
-	missing, valid_err := validation.ValidateEnvList(env_names)
-	if valid_err != nil && missing != nil {
+	missing, err := validation.ValidateEnvList(env_names)
+	if err != nil && missing != nil {
 		for _, m := range missing {
-			if cmd_f := flags.Lookup(env_names_cmd_opts[m]); cmd_f == nil {
-				return errors.New("Insufficient arguments")
+			if cmd_f := flags.Lookup(env_names_cmd_opts[m]); cmd_f == nil {				
+				return errors.Wrap(err, "app:validateCmdAndEnv() Insufficient arguments")
 			}
 		}
 	}
@@ -491,6 +547,8 @@ func validateCmdAndEnv(env_names_cmd_opts map[string]string, flags *flag.FlagSet
 }
 
 func validateSetupArgs(cmd string, args []string) error {
+	log.Trace("app:validateSetupArgs() Entering")
+	defer log.Trace("app:validateSetupArgs() Leaving")
 
 	var fs *flag.FlagSet
 
@@ -519,7 +577,7 @@ func validateSetupArgs(cmd string, args []string) error {
 
 		err := fs.Parse(args)
 		if err != nil {
-			return fmt.Errorf("Fail to parse arguments: %s", err.Error())
+			return errors.Wrap(err, "app:validateCmdAndEnv() Fail to parse arguments")
 		}
 		return validateCmdAndEnv(env_names_cmd_opts, fs)
 
@@ -528,7 +586,7 @@ func validateSetupArgs(cmd string, args []string) error {
 
 	case "all":
 		if len(args) != 0 {
-			return errors.New("Please setup the arguments with env")
+			return errors.New("app:validateCmdAndEnv() Please setup the arguments with env")
 		}
 	}
 

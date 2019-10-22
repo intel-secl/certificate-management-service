@@ -10,26 +10,32 @@ import (
 	"path"
 )
 
-func openLogFiles() (logFile *os.File, httpLogFile *os.File) {
-	logFilePath := path.Join(constants.LogDir, constants.LogFile)
-	logFile, _ = os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0664)
-	os.Chmod(logFilePath, 0664)
+func openLogFiles() (httpLogFile *os.File) {
+	log.Trace("main:openLogFiles() Entering")
+	defer log.Trace("main:openLogFiles() Leaving")
+
 	httpLogFilePath := path.Join(constants.LogDir, constants.HTTPLogFile)
-	httpLogFile, _ = os.OpenFile(httpLogFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0664)
+	httpLogFile, err := os.OpenFile(httpLogFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0664)
+	if err != nil {
+		log.Errorf("Could not open HTTP log file")
+	}
 	os.Chmod(httpLogFilePath, 0664)
 	return
 }
 
 func main() {
-	l, h := openLogFiles()
-	defer l.Close()
+	log.Trace("main:main() Entering")
+	defer log.Trace("main:main() Leaving")
+
+	h := openLogFiles()
 	defer h.Close()
 	app := &App{
-		LogWriter:     l,
 		HTTPLogWriter: h,
 	}
 	err := app.Run(os.Args)
 	if err != nil {
+		log.WithError(err).Error("main:main() CMS application error")		
+		log.Tracef("%+v",err)
 		os.Exit(1)
 	}
 }

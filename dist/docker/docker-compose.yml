@@ -9,6 +9,7 @@ services:
 
       environment:
          CMS_ADMIN_USERNAME: ${CMS_ADMIN_USERNAME:-admin}
+         CMS_ENABLE_CONSOLE_LOG: true
         #
 
       volumes:

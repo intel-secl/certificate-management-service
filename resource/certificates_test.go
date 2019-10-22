@@ -25,6 +25,9 @@ import (
 
 
 func TestGetCertificatesForCsr(t *testing.T) {
+	log.Trace("resource/certificates_test:TestGetCertificatesForCsr() Entering")
+	defer log.Trace("resource/certificates_test:TestGetCertificatesForCsr() Leaving")
+
 	assert := assert.New(t)
 	
 	os.MkdirAll("/etc/cms", os.ModePerm)

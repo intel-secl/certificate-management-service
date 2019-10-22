@@ -12,16 +12,21 @@ import (
 	"net/http"
 	"io/ioutil"
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 )
 
 // SetCACertificates is used to set the endpoints for CA certificate handling APIs
 func SetCACertificates(router *mux.Router, config *config.Configuration) {
+	log.Trace("resource/ca_certificates:SetCACertificates() Entering")
+	defer log.Trace("resource/ca_certificates:SetCACertificates() Leaving")
+
 	router.HandleFunc("/ca-certificates", GetCACertificates).Methods("GET")
 }
 
 //GetCACertificates is used to get the root CA certificate upon JWT valildation
 func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request) {
+	log.Trace("resource/ca_certificates:GetCACertificates() Entering")
+	defer log.Trace("resource/ca_certificates:GetCACertificates() Leaving")
+
 	if httpRequest.Header.Get("Accept") != "application/x-pem-file" {
 		httpWriter.WriteHeader(http.StatusNotAcceptable)
 		httpWriter.Write([]byte("Accept type not supported"))
@@ -29,9 +34,14 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 	}
 
 	issuingCa := httpRequest.URL.Query().Get("issuingCa")
+	if (issuingCa == "") {
+		issuingCa = "root"		
+	}
+	log.Debugf("resource/ca_certificates:GetCACertificates() Requesting CA certificate for - %v", issuingCa)
 	caCertificateBytes, err := getCaCert(issuingCa)
 	if err != nil {
-		log.Errorf("Cannot load Issuing CA: %v", err)
+		log.Errorf("resource/ca_certificates:GetCACertificates() Cannot load Issuing CA - %v", issuingCa)
+		log.Tracef("%+v",err)
 		if strings.Contains(err.Error(), "Invalid Query parameter") {
 			httpWriter.WriteHeader(http.StatusBadRequest)
 			httpWriter.Write([]byte("Invalid Query parameter issuing CA: "+ issuingCa))
@@ -44,18 +54,18 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 	httpWriter.Header().Set("Content-Type", "application/x-pem-file")
 	httpWriter.WriteHeader(http.StatusOK)
 	httpWriter.Write(caCertificateBytes)
+	log.Infof("resource/ca_certificates:GetCACertificates() Returned requested %v CA certificate", issuingCa)
 	return
 }
 
 func getCaCert(issuingCa string) ([]byte, error) {
-	if (issuingCa == "") {
-		return ioutil.ReadFile(constants.RootCACertPath)
+	log.Trace("resource/ca_certificates:getCaCert() Entering")
+	defer log.Trace("resource/ca_certificates:getCaCert() Leaving")
+
+	attr := constants.GetCaAttribs(issuingCa)
+	if attr.CommonName == "" {
+		return nil, fmt.Errorf("Invalid Query parameter issuingCa: %v", issuingCa)
 	} else {
-		attr := constants.GetCaAttribs(issuingCa)
-		if attr.CommonName == "" {
-			return nil, fmt.Errorf("Invalid Query parameter issuingCa: %s", issuingCa)
-		} else {
-			return ioutil.ReadFile(attr.CertPath)
-		}
-	}
+		return ioutil.ReadFile(attr.CertPath)
+	}	
 }

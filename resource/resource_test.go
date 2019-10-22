@@ -12,11 +12,17 @@ import (
 )
 
 func mockRetrieveJWTSigningCerts() error {
+	log.Trace("resource/resource_test:mockRetrieveJWTSigningCerts() Entering")
+	defer log.Trace("resource/resource_test:mockRetrieveJWTSigningCerts() Leaving")
+
 	return nil
 }
 
 
 func setupRouter() *mux.Router {
+	log.Trace("resource/resource_test:setupRouter() Entering")
+	defer log.Trace("resource/resource_test:setupRouter() Leaving")
+
 
 	r := mux.NewRouter()
 	sr := r.PathPrefix("/cms/v1/certificates").Subrouter()

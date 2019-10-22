@@ -17,6 +17,9 @@ import (
 )
 
 func TestRootCACertCreation(t *testing.T) {
+	log.Trace("tasks/rootca_test:TestRootCACertCreation() Entering")
+	defer log.Trace("tasks/rootca_test:TestRootCACertCreation() Leaving")
+
 	assert := assert.New(t)
 	CreateSerialNumberFileAndJWTDir()
 
@@ -39,6 +42,9 @@ func TestRootCACertCreation(t *testing.T) {
 }
 
 func TestRootCASetupTaskRun(t *testing.T) {
+	log.Trace("tasks/rootca_test:TestRootCASetupTaskRun() Entering")
+	defer log.Trace("tasks/rootca_test:TestRootCASetupTaskRun() Leaving")
+
 	assert := assert.New(t)
 	CreateSerialNumberFileAndJWTDir()
 

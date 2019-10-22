@@ -12,7 +12,10 @@ import (
 	"time"
 
 	"golang.org/x/time/rate"
+	clog "intel/isecl/lib/common/log"
 )
+var log = clog.GetDefaultLogger()
+var slog = clog.GetSecurityLogger()
 
 const Factor = 10
 
@@ -41,6 +44,9 @@ type Defender struct {
 
 // New initializes a Defender instance that will limit `max` event maximum per `duration` before banning the client for `banDuration`
 func New(max int, duration, banDuration time.Duration) *Defender {
+	log.Trace("defender/defender:New() Entering")
+	defer log.Trace("defender/defender:New() Leaving")
+
 	return &Defender{
 		clients:     map[interface{}]*Client{},
 		Duration:    duration,
@@ -51,6 +57,9 @@ func New(max int, duration, banDuration time.Duration) *Defender {
 
 // BanList returns the list of banned clients
 func (d *Defender) BanList() []*Client {
+	log.Trace("defender/defender:BanList() Entering")
+	defer log.Trace("defender/defender:BanList() Leaving")
+
 	l := []*Client{}
 	for _, client := range d.clients {
 		if client.banned {
@@ -61,6 +70,9 @@ func (d *Defender) BanList() []*Client {
 }
 
 func (d *Defender) Client(key interface{}) (*Client, bool) {
+	log.Trace("defender/defender:Client() Entering")
+	defer log.Trace("defender/defender:Client() Leaving")
+
 	d.Lock()
 	defer d.Unlock()
 	client, ok := d.clients[key]
@@ -69,6 +81,9 @@ func (d *Defender) Client(key interface{}) (*Client, bool) {
 
 // Increment the number of event for the given client key, returns true if the client just got banned
 func (d *Defender) Inc(key interface{}) bool {
+	log.Trace("defender/defender:Inc() Entering")
+	defer log.Trace("defender/defender:Inc() Leaving")
+
 	d.Lock()
 	defer d.Unlock()
 	now := time.Now()
@@ -112,6 +127,9 @@ func (d *Defender) Inc(key interface{}) bool {
 }
 
 func (d *Defender) RemoveClient(key interface{}){
+	log.Trace("defender/defender:RemoveClient() Entering")
+	defer log.Trace("defender/defender:RemoveClient() Leaving")
+
 	d.Lock()
 	defer d.Unlock()
 	if _, found := d.clients[key]; found {
@@ -120,6 +138,9 @@ func (d *Defender) RemoveClient(key interface{}){
 }
 // Cleanup should be used if you want to manage the cleanup yourself, looks for CleanupTask for an automatic way
 func (d *Defender) Cleanup() {
+	log.Trace("defender/defender:Cleanup() Entering")
+	defer log.Trace("defender/defender:Cleanup() Leaving")
+
 	d.Lock()
 	defer d.Unlock()
 	now := time.Now()
@@ -132,6 +153,9 @@ func (d *Defender) Cleanup() {
 
 // CleanupTask should be run in a goroutime
 func (d *Defender) CleanupTask(quit <-chan struct{}) {
+	log.Trace("defender/defender:CleanupTask() Entering")
+	defer log.Trace("defender/defender:CleanupTask() Leaving")
+
 	c := time.Tick(d.Duration * Factor)
 	for {
 		select {

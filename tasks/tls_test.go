@@ -16,6 +16,9 @@ import (
 )
 
 func TestTlsCertCreation(t *testing.T) {
+        log.Trace("tasks/tls_test:TestTlsCertCreation() Entering")
+	defer log.Trace("tasks/tls_test:TestTlsCertCreation() Leaving")
+
 	assert := assert.New(t)
         CreateSerialNumberFileAndJWTDir()
 
@@ -51,6 +54,9 @@ func TestTlsCertCreation(t *testing.T) {
 }
 
 func TestTlsSetupTaskRun(t *testing.T){
+        log.Trace("tasks/tls_test:TestTlsSetupTaskRun() Entering")
+	defer log.Trace("tasks/tls_test:TestTlsSetupTaskRun() Leaving")
+
 	assert := assert.New(t)
         CreateSerialNumberFileAndJWTDir()
 
@@ -79,6 +85,9 @@ func TestTlsSetupTaskRun(t *testing.T){
 }
 
 func TestOutboundHost(t *testing.T) {
+        log.Trace("tasks/tls_test:TestOutboundHost() Entering")
+	defer log.Trace("tasks/tls_test:TestOutboundHost() Leaving")
+
 	host, err := outboundHost()
 	assert.NoError(t, err)
 	assert.NotNil(t, host)

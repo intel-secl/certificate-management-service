@@ -15,6 +15,9 @@ import (
 )
 
 func TestCreateCmsAuthToken(t *testing.T){
+        log.Trace("tasks/authtoken_test:TestCreateCmsAuthToken() Entering")
+	defer log.Trace("tasks/authtoken_test:TestCreateCmsAuthToken() Leaving")
+
 	assert := assert.New(t)
         os.Setenv("CMS_KEY_ALGORITHM", "RSA")
         os.Setenv("CMS_KEY_LENGTH", "3072")
@@ -35,6 +38,9 @@ func TestCreateCmsAuthToken(t *testing.T){
 
 
 func TestAuthTokenRun(t *testing.T) {
+        log.Trace("tasks/authtoken_test:TestAuthTokenRun() Entering")
+	defer log.Trace("tasks/authtoken_test:TestAuthTokenRun() Leaving")
+
         assert := assert.New(t)
         os.Setenv("CMS_KEY_ALGORITHM", "RSA")
         os.Setenv("CMS_KEY_LENGTH", "3072")
