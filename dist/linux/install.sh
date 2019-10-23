@@ -10,13 +10,13 @@ elif [ -f ../cms.env ]; then
     env_file=../cms.env
 fi
 
-if [ -n $env_file ]; then
+if [ -z $env_file ]; then
+    echo No .env file found
+    CMS_NOSETUP="true"
+else
     source $env_file
     env_file_exports=$(cat $env_file | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
     if [ -n "$env_file_exports" ]; then eval export $env_file_exports; fi
-else
-    echo No .env file found
-    CMS_NOSETUP="true"
 fi
 
 if [[ $EUID -ne 0 ]]; then 
