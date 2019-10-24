@@ -25,6 +25,7 @@ func TestGetCaCertificates(t *testing.T) {
 	assert := assert.New(t)
 	
 	os.MkdirAll("/etc/cms", os.ModePerm)
+	os.MkdirAll("/etc/cms/root-ca", os.ModePerm)
         var file, _ = os.Create("/etc/cms/serial-number")
         defer file.Close()
 

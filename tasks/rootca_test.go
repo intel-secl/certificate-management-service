@@ -28,13 +28,7 @@ func TestRootCACertCreation(t *testing.T) {
 	defer os.Remove(temp.Name())
 	c := config.Load(temp.Name())
 
-	ca := Root_Ca{
-		Flags:         nil,
-		ConsoleWriter: os.Stdout,
-		Config: c,	
-	}
-
-	_, certData, err := createRootCACert(ca)
+	_, certData, err := createRootCACert(c)
 	assert.NoError(err)
 	cert, err := x509.ParseCertificate(certData)
 	assert.NoError(err)
