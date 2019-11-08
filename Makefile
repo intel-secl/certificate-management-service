@@ -1,8 +1,10 @@
+SHELL := /bin/bash
 GITTAG := $(shell git describe --tags --abbrev=0 2> /dev/null)
 GITCOMMIT := $(shell git describe --always)
 GITCOMMITDATE := $(shell git log -1 --date=short --pretty=format:%cd)
 VERSION := $(or ${GITTAG}, v0.0.0)
 
+PROXY_EXISTS := $(shell if [[ "${https_proxy}" || "${http_proxy}" ]]; then echo 1; else echo 0; fi)
 .PHONY: cms installer docker all test clean
 
 cms:
@@ -17,7 +19,11 @@ installer: cms
 
 docker: installer
 	cp dist/docker/entrypoint.sh out/entrypoint.sh && chmod +x out/entrypoint.sh
-	docker build -t isecl/cms:latest -f ./dist/docker/Dockerfile ./out
+ifeq ($(PROXY_EXISTS),1)
+	docker build -t isecl/cms:latest --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -f ./dist/docker/Dockerfile ./out
+else
+	docker build -t isecl/cms:latest  -f ./dist/docker/Dockerfile ./out
+endif
 	docker save isecl/cms:latest > ./out/docker-cms-$(VERSION)-$(GITCOMMIT).tar
 
 docker-zip: installer

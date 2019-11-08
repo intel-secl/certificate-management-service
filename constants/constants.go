@@ -27,7 +27,7 @@ const (
 	RootCADirPath                  = ConfigDir + "root-ca/"
 	RootCACertPath                 = RootCADirPath + "root-ca-cert.pem"
 	RootCAKeyPath                  = ConfigDir + "root-ca.key"
-	IntermediataCADirPath          = ConfigDir + "interimediate-ca/"
+	IntermediateCADirPath          = ConfigDir + "intermediate-ca/"
 	TLSCertPath                    = ConfigDir + "tls-cert.pem"
 	TLSKeyPath                     = ConfigDir + "tls.key"
 	SerialNumberPath               = ConfigDir + "serial-number"
@@ -85,9 +85,9 @@ const (
 
 var mp = map[string]CaAttrib{
 	Root:      {"CMSCA", RootCADirPath + "root-ca-cert.pem", ConfigDir + "root-ca.key"},
-	Tls:       {"CMS TLS CA", IntermediataCADirPath + "tls-ca.pem", IntermediataCADirPath + "tls-ca.key"},
-	TlsClient: {"CMS TLS Client CA", IntermediataCADirPath + "tls-client-ca.pem", IntermediataCADirPath + "tls-client-ca.key"},
-	Signing:   {"CMS Signing CA", IntermediataCADirPath + "signing-ca.pem", IntermediataCADirPath + "signing-ca.key"},
+	Tls:       {"CMS TLS CA", IntermediateCADirPath + "tls-ca.pem", IntermediateCADirPath + "tls-ca.key"},
+	TlsClient: {"CMS TLS Client CA", IntermediateCADirPath + "tls-client-ca.pem", IntermediateCADirPath + "tls-client-ca.key"},
+	Signing:   {"CMS Signing CA", IntermediateCADirPath + "signing-ca.pem", IntermediateCADirPath + "signing-ca.key"},
 }
 
 func GetIntermediateCAs() []string {

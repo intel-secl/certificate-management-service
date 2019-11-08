@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/rhel7:7.5
+FROM registry.access.redhat.com/ubi7-init:7.6
 
 COPY cms-*.bin /tmp/cms.bin
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh

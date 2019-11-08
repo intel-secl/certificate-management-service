@@ -17,7 +17,7 @@ func CreateSerialNumberFileAndJWTDir(){
         os.MkdirAll(constants.ConfigDir, os.ModePerm)
         os.MkdirAll(constants.TrustedJWTSigningCertsDir, os.ModePerm)
         os.MkdirAll(constants.RootCADirPath, os.ModePerm)
-        os.MkdirAll(constants.IntermediataCADirPath, os.ModePerm)
+        os.MkdirAll(constants.IntermediateCADirPath, os.ModePerm)
         var file, _ = os.Create(constants.SerialNumberPath)
         defer file.Close()
 }

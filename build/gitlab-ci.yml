@@ -14,6 +14,7 @@ before_script:
   
 variables:
   HTTPS_PROXY: http://proxy-us.intel.com:911
+  https_proxy: http://proxy-us.intel.com:911
   no_proxy: ".intel.com"
 
 stages:

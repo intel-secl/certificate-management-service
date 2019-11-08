@@ -57,9 +57,9 @@ mkdir -p $CONFIG_PATH/root-ca && chown cms:cms $CONFIG_PATH/root-ca
 chmod 700 $CONFIG_PATH/root-ca
 chmod g+s $CONFIG_PATH/root-ca
 
-mkdir -p $CONFIG_PATH/interimediate-ca && chown cms:cms $CONFIG_PATH/interimediate-ca
-chmod 700 $CONFIG_PATH/interimediate-ca
-chmod g+s $CONFIG_PATH/interimediate-ca
+mkdir -p $CONFIG_PATH/intermediate-ca && chown cms:cms $CONFIG_PATH/intermediate-ca
+chmod 700 $CONFIG_PATH/intermediate-ca
+chmod g+s $CONFIG_PATH/intermediate-ca
 
 # Create logging dir in /var/log
 mkdir -p $LOG_PATH && chown cms:cms $LOG_PATH
