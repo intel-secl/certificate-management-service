@@ -5,6 +5,7 @@
  package tasks
 
  import (
+	 "crypto"
 	 "crypto/rand"
 	 "crypto/x509"
 	 "crypto/x509/pkix"
@@ -18,6 +19,7 @@
 	 "intel/isecl/cms/constants"
 	 "intel/isecl/cms/utils"
 	 "io"
+	 "io/ioutil"
 	 "net"
 	 "os"
 	 "strings"
@@ -144,6 +146,19 @@
 		 if err != nil {
 			return errors.Wrap(err, "tasks/tls:Run() Could not save TLS certificate")
 		 }
+
+		 tlsCertificateBytes, err := ioutil.ReadFile(constants.TLSCertPath)
+		 if err != nil {
+			 return errors.Wrap(err, "tasks/tls:Run() Could not read TLS cert")
+		 }
+
+		 tlsDigest, err := crypt.GetCertHashFromPemInHex(tlsCertificateBytes, crypto.SHA384)
+		 if err != nil {
+			 return errors.Wrap(err, "tasks/tls:Run() Unable to get digest of TLS certificate")
+		 }
+		 ts.Config.TlsCertDigest = tlsDigest
+		 ts.Config.Save();
+		 fmt.Println("TLS Certificate Digest : ", tlsDigest)
 	 } else {
 		 fmt.Println("TLS already configured, skipping")
 	 }
