@@ -61,7 +61,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 	log.Info("validation/validate_CSR:ValidateCertificateRequest() Got valid Common Name in CSR : " + subjectFromCsr)
 
 	// Is SAN requested in CSR? Also, requested DNS is not empty for Go services
-	if len(csr.IPAddresses) > 0 || (len(csr.DNSNames) > 0 && len(strings.TrimSpace(csr.DNSNames[0])) > 0 ) {
+	if strings.EqualFold("TLS", certType)  && (len(csr.IPAddresses) > 0 || (len(csr.DNSNames) > 0 && len(strings.TrimSpace(csr.DNSNames[0])) > 0 )){
 		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(IP) requested in CSR - %v ", csr.IPAddresses)
 		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(DNS) requested in CSR - %v ", csr.DNSNames)
 		for _, sanlistFromToken := range sanListsFromToken {
