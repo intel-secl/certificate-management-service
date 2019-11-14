@@ -80,7 +80,7 @@ func (a *App) printUsage() {
 	fmt.Fprintln(w, "        - Create its own root_ca signed TLS keypair in /etc/cms for quality of life")
 	fmt.Fprintln(w, "        - Option [--force] overwrites any existing files, and always generate root_ca signed TLS keypair")
 	fmt.Fprintln(w, "        - Argument <host_names> is a list of host names used by local machine, seperated by comma")
-	fmt.Fprintln(w, "        - Environment variable CMS_HOST_NAMES=<host_names> can be set alternatively")
+	fmt.Fprintln(w, "        - Environment variable SAN_LIST=<host_names> can be set alternatively")
 	fmt.Fprintln(w, "    cms setup cms_auth_token [--force]")
 	fmt.Fprintln(w, "        - Create its own self signed JWT keypair in /etc/cms/jwt for quality of life")
 	fmt.Fprintln(w, "        - Option [--force] overwrites any existing files, and always generate new JWT keypair and token")
@@ -568,7 +568,7 @@ func validateSetupArgs(cmd string, args []string) error {
 	case "tls":
 
 		env_names_cmd_opts := map[string]string{
-			"CMS_HOST_NAMES": "host_names",
+			"SAN_LIST": "host_names",
 		}
 
 		fs = flag.NewFlagSet("tls", flag.ContinueOnError)

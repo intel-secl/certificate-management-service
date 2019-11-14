@@ -309,7 +309,7 @@ CMS_CA_PROVINCE=SF
 CMS_CA_COUNTRY=US
 
 #SAN list for TLS certificate
-CMS_HOST_NAMES=127.0.0.1,localhost
+SAN_LIST=127.0.0.1,localhost
 
 #These details are for future work when CMS need to support multiple algorithms
 CMS_KEY_ALGORITHM="rsa"

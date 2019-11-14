@@ -105,7 +105,7 @@
 	 fmt.Fprintln(ts.ConsoleWriter, "Running tls setup...")
 	 fs := flag.NewFlagSet("tls", flag.ContinueOnError)
 	 force := fs.Bool("force", false, "force recreation, will overwrite any existing tls keys")
-	 defaultHostname, err := c.GetenvString("CMS_HOST_NAMES", "comma separated list of hostnames to add to TLS certificate")
+	 defaultHostname, err := c.GetenvString("SAN_LIST", "comma separated list of hostnames to add to TLS certificate")
 	 if err != nil {
 		 defaultHostname, _ = outboundHost()
 	 }
