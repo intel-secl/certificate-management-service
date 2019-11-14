@@ -28,61 +28,65 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 		return fmt.Errorf("validation/validate_CSR:ValidateCertificateRequest() Incorrect Signature Algorithm used (should be SHA 384 with RSA): %v", csr.SignatureAlgorithm)
 	}
 
-	// Validate CN
-	cnSanMapFromToken := make(map[string]string)
-	cnTypeMapFromToken := make(map[string]string)
-
-	// TODO: There is a problem here. We could have someone that has a role where the common name matches because they
-	// want to obtain different type of certificates with the same common name. We are breaking out the loop below
-	// when we find the first match with the common name. We should be looking for roles that matches the tuplet from CSR
-	// common name, cert type and SAN List (if applicable). Need to re-order logic
-	for k,_  := range *ctxMap {
-		params := strings.Split(k, ";")		
-		if len(params) < 3 {
-			cnSanMapFromToken[params[0]] = ""	
-			cnTypeMapFromToken[params[0]] = params[1]	
-		} else {
-			cnSanMapFromToken[params[0]] = params[1]
-			cnTypeMapFromToken[params[0]] = params[2]		
-		}
-		log.Debug("validation/validate_CSR:ValidateCertificateRequest() Common Name in Token : " + params[0])
-	}
 	subjectsFromCsr := strings.Split(csr.Subject.String(), ",")
 	subjectFromCsr := ""
 	for _,sub := range subjectsFromCsr {
 		log.Debug(sub);
 		if strings.Contains(sub, "CN=") {
-			subjectFromCsr = sub			
+			subjectFromCsr = sub
 			break
 		}
 	}
-	
-	log.Debug("validation/validate_CSR:ValidateCertificateRequest() Common Name in CSR : " + csr.Subject.String())		
-	if sanlistFromToken, ok := cnSanMapFromToken[subjectFromCsr]; ok {
-		log.Info("validation/validate_CSR:ValidateCertificateRequest() Got valid Common Name in CSR : " + csr.Subject.String())		
-		if sanlistFromToken != "" {
-			log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list requested in token - %v ", sanlistFromToken)
-			sans := strings.Split(sanlistFromToken, "=")
-			if len(sans) > 1 {	
-				tokenSanList := strings.Split(sans[1], ",")	
-				log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(IP) requested in CSR - %v ", csr.IPAddresses)
-				log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(DNS) requested in CSR - %v ", csr.DNSNames)
-				for _, san := range tokenSanList {				
-					if !ipInSlice(san, csr.IPAddresses) && !stringInSlice(san, csr.DNSNames) {
-						return errors.New("validation/validate_CSR:ValidateCertificateRequest() No role associated with provided SAN list in CSR")
-					}
-				}		
-			}					
+	// Validate CN
+	sanListsFromToken := []string{}
+	isCnPresentInToken := false
+
+	for k,_  := range *ctxMap {
+		params := strings.Split(k, ";")
+		// Check if Subject matches with CN
+		if len(params) > 0 && strings.EqualFold(params[0], subjectFromCsr) {
+			isCnPresentInToken = true
+			log.Debugf("validation/validate_CSR:ValidateCertificateRequest() Token contains required Common Name : %v ", subjectFromCsr)
+			if len(params) > 2 {
+				if strings.EqualFold(params[2], "CERTTYPE=" +certType) { // Check if cert type matches
+					sanListsFromToken = append(sanListsFromToken, params[1])
+				}
+			}
 		}
-	} else {
-		return errors.New("validation/validate_CSR:ValidateCertificateRequest() No role associated with provided Common Name in CSR")
 	}
 
-	if certTypeFromToken, _ := cnTypeMapFromToken[subjectFromCsr]; !strings.EqualFold("CERTTYPE=" + certType, certTypeFromToken) {
-		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() Certificate Type in token - %v ", certTypeFromToken)	
-		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() Certificate Type in request - %v ", certType)	
-		return fmt.Errorf("validation/validate_CSR:ValidateCertificateRequest() No role associated with provided Certificate Type in request - %v", certType)
-	}	
+	if(!isCnPresentInToken) {
+		return errors.New("validation/validate_CSR:ValidateCertificateRequest() No role associated with provided Common Name in CSR -" + subjectFromCsr)
+	}
+	log.Info("validation/validate_CSR:ValidateCertificateRequest() Got valid Common Name in CSR : " + subjectFromCsr)
+
+	// Is SAN requested in CSR? Also, requested DNS is not empty for Go services
+	if len(csr.IPAddresses) > 0 || (len(csr.DNSNames) > 0 && len(strings.TrimSpace(csr.DNSNames[0])) > 0 ) {
+		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(IP) requested in CSR - %v ", csr.IPAddresses)
+		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(DNS) requested in CSR - %v ", csr.DNSNames)
+		for _, sanlistFromToken := range sanListsFromToken {
+			if sanlistFromToken != "" {
+				log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list requested in token - %v ", sanlistFromToken)
+				sans := strings.Split(sanlistFromToken, "=")
+				if len(sans) > 1 {
+					tokenSanList := strings.Split(sans[1], ",")
+					isSanPresentInToken := true
+					for _, san := range tokenSanList {
+						if !ipInSlice(san, csr.IPAddresses) && !stringInSlice(san, csr.DNSNames) {
+							isSanPresentInToken = false
+							break;
+						}
+					}
+					if(isSanPresentInToken) {
+						log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list requested in CSR is part of Token is valid",)
+						return nil
+					}
+				}
+			}
+		}
+		return errors.New("validation/validate_CSR:ValidateCertificateRequest() No role associated with provided SAN list in CSR")
+	}
+	log.Info("validation/validate_CSR:ValidateCertificateRequest() Certificate Signing Request is valid")
 	return nil
 }
 
