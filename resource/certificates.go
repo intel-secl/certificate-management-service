@@ -91,8 +91,8 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	}
 
 	pemBlock, _ := pem.Decode(responseBodyBytes)
-	if pemBlock == nil {
-		log.WithError(err).Error("resource/certificates:GetCertificates() Failed to decode input pem")
+	if pemBlock == nil || !strings.Contains (pemBlock.Type, "CERTIFICATE REQUEST") {
+		log.WithError(err).Error("resource/certificates:GetCertificates() Failed to decode pem block containing certificate")
 		httpWriter.WriteHeader(http.StatusBadRequest) 
 		httpWriter.Write([]byte("Failed to decode pem" + err.Error()))
 		return
@@ -167,8 +167,6 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageContentCommitment
 		clientCRTTemplate.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
 	
-		// TODO: should we be supporting signing CA over REST API? This seems like a dangerous proposition.
-		// This should really be done by an administrator on the console. Not over REST API
 	} else {
 		log.Errorf("Invalid certType provided")
 		httpWriter.WriteHeader(http.StatusBadRequest)

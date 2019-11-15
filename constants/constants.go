@@ -9,6 +9,7 @@ import (
 	clog "intel/isecl/lib/common/log"
 	"time"
 )
+
 var log = clog.GetDefaultLogger()
 
 const (
@@ -99,7 +100,7 @@ var mp = map[string]CaAttrib{
 func GetIntermediateCAs() []string {
 	log.Trace("constants/constants:GetIntermediateCAs() Entering")
 	defer log.Trace("constants/constants:GetIntermediateCAs() Leaving")
-	
+
 	return []string{Tls, TlsClient, Signing}
 }
 
