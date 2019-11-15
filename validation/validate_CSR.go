@@ -10,6 +10,7 @@ import (
 	"strings"
 	"net"
 	"intel/isecl/cms/config"
+	"intel/isecl/cms/constants"
 	"github.com/pkg/errors"
 	types "intel/isecl/lib/common/types/aas"
 	clog "intel/isecl/lib/common/log"
@@ -60,8 +61,8 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 	}
 	log.Info("validation/validate_CSR:ValidateCertificateRequest() Got valid Common Name in CSR : " + subjectFromCsr)
 
-	// Is SAN requested in CSR? Also, requested DNS is not empty for Go services
-	if strings.EqualFold("TLS", certType)  && (len(csr.IPAddresses) > 0 || (len(csr.DNSNames) > 0 && len(strings.TrimSpace(csr.DNSNames[0])) > 0 )){
+	// Validate SAN only for TLS
+	if strings.EqualFold(constants.Tls, certType) || strings.EqualFold(constants.TlsClient, certType) {
 		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(IP) requested in CSR - %v ", csr.IPAddresses)
 		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(DNS) requested in CSR - %v ", csr.DNSNames)
 		for _, sanlistFromToken := range sanListsFromToken {
