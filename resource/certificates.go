@@ -7,7 +7,8 @@ package resource
 import (
 	"crypto/rand"
 	"crypto/x509"
-	"encoding/pem"	
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/constants"
 	"intel/isecl/lib/common/crypt"
@@ -104,6 +105,13 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		httpWriter.Write([]byte("Invalid CSR provided: " + err.Error()))
 		return
 	}
+	err = clientCSR.CheckSignature()
+	if err != nil {
+		log.WithError(err).Error("resource/certificates:GetCertificates() CSR signature does not match")
+		httpWriter.WriteHeader(http.StatusBadRequest)
+		httpWriter.Write([]byte("Invalid CSR provided: " + err.Error()))
+		return
+	}
 
 	err = validation.ValidateCertificateRequest(config, clientCSR, certType, ctxMap)
 	if err != nil {
@@ -131,9 +139,10 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		PublicKeyAlgorithm: clientCSR.PublicKeyAlgorithm,
 		PublicKey:          clientCSR.PublicKey,
 
-
 		SerialNumber: serialNumber,
-		Subject:      clientCSR.Subject,
+		Subject:      pkix.Name{
+			CommonName: clientCSR.Subject.CommonName,
+		},
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(1, 0, 0),
 	}
@@ -148,7 +157,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		clientCRTTemplate.DNSNames =  clientCSR.DNSNames
 		clientCRTTemplate.IPAddresses = clientCSR.IPAddresses
 
-		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageContentCommitment
+		clientCRTTemplate.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageContentCommitment
 		clientCRTTemplate.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}
 	} else if strings.EqualFold(certType, "Flavor-Signing") || strings.EqualFold(certType, "JWT-Signing") || strings.EqualFold(certType, "Signing") {
 		issuingCa = constants.Signing

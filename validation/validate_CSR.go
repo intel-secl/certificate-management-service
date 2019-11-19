@@ -7,11 +7,13 @@ package validation
 import (
 	"crypto/x509"
 	"fmt"
+	"net/url"
 	"strings"
 	"net"
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/constants"
 	"github.com/pkg/errors"
+	"intel/isecl/lib/common/validation"
 	types "intel/isecl/lib/common/types/aas"
 	clog "intel/isecl/lib/common/log"
 )
@@ -65,6 +67,11 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 	if strings.EqualFold(constants.Tls, certType) || strings.EqualFold(constants.TlsClient, certType) {
 		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(IP) requested in CSR - %v ", csr.IPAddresses)
 		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(DNS) requested in CSR - %v ", csr.DNSNames)
+		err := validateDNSNames(csr.DNSNames)
+		if err != nil {
+			return errors.Wrap(err, "validation/validate_CSR:ValidateCertificateRequest() Unsupported content in SAN list")
+		}
+
 		for _, sanlistFromToken := range sanListsFromToken {
 			if sanlistFromToken != "" {
 				log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list requested in token - %v ", sanlistFromToken)
@@ -91,6 +98,19 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 	return nil
 }
 
+func validateDNSNames(list []string) error {
+	log.Trace("validation/validate_CSR:validateDNSNames() Entering")
+	defer log.Trace("validation/validate_CSR:validateDNSNames() Leaving")
+	for _, v := range list {
+		if _, err := url.Parse(v); err != nil {
+			return errors.New("validation/validate_CSR:ValidateCertificateRequest() URL is not supported under SAN list in CSR")
+		}
+		if err := validation.ValidateEmailString(v); err == nil {
+			return errors.New("validation/validate_CSR:ValidateCertificateRequest() Email is not supported under SAN list in CSR")
+		}
+	}
+	return nil
+}
 
 func stringInSlice(str string, list []string) bool {
 	log.Trace("validation/validate_CSR:stringInSlice() Entering")
