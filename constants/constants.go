@@ -7,6 +7,7 @@ package constants
 import (
 	"crypto"
 	clog "intel/isecl/lib/common/log"
+	"time"
 )
 var log = clog.GetDefaultLogger()
 
@@ -58,6 +59,11 @@ const (
 	DefaultAasTlsSan               = "127.0.0.1,localhost"
 	DefaultTokenDurationMins       = 240
 	DefaultJwtValidateCacheKeyMins = 60
+	DefaultReadTimeout             = 30 * time.Second
+	DefaultReadHeaderTimeout       = 10 * time.Second
+	DefaultWriteTimeout            = 10 * time.Second
+	DefaultIdleTimeout             = 10 * time.Second
+	DefaultMaxHeaderBytes          = 1 << 20
 )
 
 // State represents whether or not a daemon is running or not

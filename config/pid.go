@@ -8,8 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-
-	log "github.com/sirupsen/logrus" //Default logger is required for config hence customized logger can not be used
+	
 	"github.com/pkg/errors"
 )
 

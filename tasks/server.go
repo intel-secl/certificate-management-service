@@ -12,6 +12,7 @@ import (
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/constants"
 	"io"
+	"time"
 )
 
 type Server struct {
@@ -60,6 +61,42 @@ func (s Server) Run(c setup.Context) error {
 	if s.Config.TokenDurationMins == 0 {
 		s.Config.TokenDurationMins = constants.DefaultTokenDurationMins
 	}
+
+	readTimeout, err := c.GetenvInt("CMS_SERVER_READ_TIMEOUT", "Certificate Management Service Read Timeout")
+	if err != nil {
+		s.Config.ReadTimeout = constants.DefaultReadTimeout
+	} else {
+		s.Config.ReadTimeout = time.Duration(readTimeout) * time.Second
+	}
+
+	readHeaderTimeout, err := c.GetenvInt("CMS_SERVER_READ_HEADER_TIMEOUT", "Certificate Management Service Read Header Timeout")
+	if err != nil {
+		s.Config.ReadHeaderTimeout = constants.DefaultReadHeaderTimeout
+	} else {
+		s.Config.ReadHeaderTimeout = time.Duration(readHeaderTimeout) * time.Second
+	}
+
+	writeTimeout, err := c.GetenvInt("CMS_SERVER_WRITE_TIMEOUT", "Certificate Management Service Write Timeout")
+	if err != nil {
+		s.Config.WriteTimeout = constants.DefaultWriteTimeout
+	} else {
+		s.Config.WriteTimeout = time.Duration(writeTimeout) * time.Second
+	}
+
+	idleTimeout, err := c.GetenvInt("CMS_SERVER_IDLE_TIMEOUT", "Certificate Management Service Idle Timeout")
+	if err != nil {
+		s.Config.IdleTimeout = constants.DefaultIdleTimeout
+	} else {
+		s.Config.IdleTimeout = time.Duration(idleTimeout) * time.Second
+	}
+
+	maxHeaderBytes, err := c.GetenvInt("CMS_SERVER_MAX_HEADER_BYTES", "Certificate Management Service Max Header Bytes Timeout")
+	if err != nil {
+		s.Config.MaxHeaderBytes = constants.DefaultMaxHeaderBytes
+	} else {
+		s.Config.MaxHeaderBytes = maxHeaderBytes
+	}
+
 	s.Config.Save()
 	return nil
 }

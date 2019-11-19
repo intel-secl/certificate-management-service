@@ -10,10 +10,13 @@ import (
 	"os"
 	"path"
 	"sync"
+	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	clog "intel/isecl/lib/common/log"
 )
+var log = clog.GetDefaultLogger()
 
 // should move this into lib common, as its duplicated across TDS and TDA
 
@@ -22,7 +25,7 @@ import (
 type Configuration struct {
 	configFile       string
 	Port             int
-	LogLevel         log.Level
+	LogLevel         logrus.Level
 	AuthServiceUrl         string
 
 	CACertValidity         int
@@ -35,6 +38,12 @@ type Configuration struct {
 	RootCACertDigest       string
 	TlsCertDigest          string
 	TokenDurationMins      int
+
+	ReadTimeout            time.Duration
+	ReadHeaderTimeout      time.Duration
+	WriteTimeout           time.Duration
+	IdleTimeout            time.Duration
+	MaxHeaderBytes         int
 
 	AasJwtCn               string
 	AasTlsCn               string
@@ -100,7 +109,7 @@ func Load(path string) *Configuration {
 		yaml.NewDecoder(file).Decode(&c)
 	} else {
 		// file doesnt exist, create a new blank one
-		c.LogLevel = log.InfoLevel
+		c.LogLevel = logrus.InfoLevel
 	}
 
 	c.configFile = path

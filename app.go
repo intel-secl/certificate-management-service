@@ -411,6 +411,11 @@ func (a *App) startServer() error {
 		Handler:   handlers.RecoveryHandler(handlers.RecoveryLogger(httpLog), handlers.PrintRecoveryStack(true))(handlers.CombinedLoggingHandler(a.httpLogWriter(), r)),
 		ErrorLog:  httpLog,
 		TLSConfig: tlsconfig,
+		ReadTimeout: c.ReadTimeout,
+		ReadHeaderTimeout: c.ReadHeaderTimeout,
+		WriteTimeout: c.WriteTimeout,
+		IdleTimeout: c.IdleTimeout,
+		MaxHeaderBytes: c.MaxHeaderBytes,
 	}
 
 	// dispatch web server go routine
@@ -418,7 +423,7 @@ func (a *App) startServer() error {
 		tlsCert := constants.TLSCertPath
 		tlsKey := constants.TLSKeyPath
 		if err := h.ListenAndServeTLS(tlsCert, tlsKey); err != nil {
-			log.WithError(err).Info("app:startServer() Failed to start HTTPS server")
+			log.WithError(err).Fatal("app:startServer() Failed to start HTTPS server")
 			stop <- syscall.SIGTERM
 		}
 	}()
