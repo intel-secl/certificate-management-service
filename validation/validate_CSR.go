@@ -16,9 +16,11 @@ import (
 	"intel/isecl/lib/common/validation"
 	types "intel/isecl/lib/common/types/aas"
 	clog "intel/isecl/lib/common/log"
+	"intel/isecl/lib/common/search"
 )
 var log = clog.GetDefaultLogger()
 var slog = clog.GetSecurityLogger()
+
 
 //ValidateCertificateRequest is used to validate the Certificate Signing Request
 func ValidateCertificateRequest(conf *config.Configuration, csr *x509.CertificateRequest, certType string,
@@ -47,7 +49,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 	for k,_  := range *ctxMap {
 		params := strings.Split(k, ";")
 		// Check if Subject matches with CN
-		if len(params) > 0 && strings.EqualFold(params[0], subjectFromCsr) {
+		if len(params) > 0 && (strings.EqualFold(params[0], subjectFromCsr) || search.WildcardMatched(params[0], subjectFromCsr)) {
 			isCnPresentInToken = true
 			log.Debugf("validation/validate_CSR:ValidateCertificateRequest() Token contains required Common Name : %v ", subjectFromCsr)
 			if len(params) > 2 {
@@ -116,7 +118,7 @@ func stringInSlice(str string, list []string) bool {
 	log.Trace("validation/validate_CSR:stringInSlice() Entering")
 	defer log.Trace("validation/validate_CSR:stringInSlice() Leaving")
 	for _, v := range list {
-		if strings.EqualFold(v,str) {
+		if strings.EqualFold(v,str) || search.WildcardMatched(v,str) {
 			return true
 		}
 	}
@@ -128,10 +130,9 @@ func ipInSlice(h string, list []net.IP) bool {
 	log.Trace("validation/validate_CSR:ipInSlice() Entering")
 	defer log.Trace("validation/validate_CSR:ipInSlice() Leaving")
 	for _, v := range list {
-		if ip := net.ParseIP(h); ip != nil {		
-			if strings.EqualFold(v.String(), h) {
+		if ip := net.ParseIP(h); (ip != nil &&  strings.EqualFold(v.String(), h)) ||
+			search.WildcardMatched(v.String(), h){
 				return true
-			}
 		}
 	}
 	return false
