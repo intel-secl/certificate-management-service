@@ -63,7 +63,7 @@ chmod g+s $CONFIG_PATH/intermediate-ca
 
 # Create logging dir in /var/log
 mkdir -p $LOG_PATH && chown cms:cms $LOG_PATH
-chmod 761 $LOG_PATH
+chmod 700 $LOG_PATH
 chmod g+s $LOG_PATH
 
 # Install systemd script
