@@ -6,8 +6,11 @@ package main
 
 import (
 	"intel/isecl/cms/constants"
+
 	"os"
+	"os/user"
 	"path"
+	"strconv"
 )
 
 func openLogFiles() (httpLogFile *os.File) {
@@ -19,6 +22,23 @@ func openLogFiles() (httpLogFile *os.File) {
 	if err != nil {
 		log.Errorf("Could not open HTTP log file")
 	}
+
+	cmsUser, err := user.Lookup(constants.CMSUserName)
+	if err != nil {
+		log.Errorf("Could not find user '%s'", constants.CMSUserName)
+	}
+
+	uid, err := strconv.Atoi(cmsUser.Uid)
+	if err != nil {
+		log.Errorf("Could not parse cms user uid '%s'", cmsUser.Uid)
+	}
+
+	gid, err := strconv.Atoi(cmsUser.Gid)
+	if err != nil {
+		log.Errorf("Could not parse cms user gid '%s'", cmsUser.Gid)
+	}
+
+	os.Chown(httpLogFilePath, uid, gid)
 	os.Chmod(httpLogFilePath, 0664)
 	return
 }

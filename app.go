@@ -25,15 +25,17 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"os/signal"
 	"strings"
 	"syscall"
+	"strconv"
 	"time"
 	"intel/isecl/lib/common/middleware"
 
 	"github.com/pkg/errors"
-    commLog "intel/isecl/lib/common/log"
-    commLogInt "intel/isecl/lib/common/log/setup"
+        commLog "intel/isecl/lib/common/log"
+        commLogInt "intel/isecl/lib/common/log/setup"
 	stdlog "log"
 
 	"github.com/gorilla/handlers"
@@ -196,6 +198,21 @@ func (a *App) Run(args []string) error {
 		os.Exit(1)
 	}
 	var err error
+	cmsUser, err := user.Lookup(constants.CMSUserName)
+        if err != nil {
+                return errors.Wrapf(err,"Could not find user '%s'", constants.CMSUserName)
+        }
+
+        uid, err := strconv.Atoi(cmsUser.Uid)
+        if err != nil {
+                return errors.Wrapf(err,"Could not parse cms user uid '%s'", cmsUser.Uid)
+        }
+
+        gid, err := strconv.Atoi(cmsUser.Gid)
+        if err != nil {
+               return errors.Wrapf(err,"Could not parse cms user gid '%s'", cmsUser.Gid)
+        }
+
 	secLogFile, err = os.OpenFile(constants.SecurityLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
 	if err != nil {
 		log.Errorf("Could not open Security log file")
@@ -206,6 +223,8 @@ func (a *App) Run(args []string) error {
 		log.Errorf("Could not open default log file")
 	}
 	os.Chmod(constants.LogFile, 0664)
+	os.Chown(constants.LogFile, uid, gid)
+	os.Chown(constants.SecurityLogFile, uid, gid)
 
 	defer secLogFile.Close()
 	defer defaultLogFile.Close()
@@ -323,6 +342,14 @@ func (a *App) Run(args []string) error {
 			fmt.Println("Error running setup: ", err)
 			return errors.Wrap(err, "app:Run() Error running setup")
 		}
+	
+		//Change the fileownership to cms user
+
+		err = cos.ChownR(constants.ConfigDir,uid,gid)
+		if err != nil {
+			return errors.Wrap(err,"Error while changing file ownership")
+		}
+
 	}
 	return nil
 }

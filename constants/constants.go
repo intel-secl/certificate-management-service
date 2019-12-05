@@ -13,6 +13,7 @@ import (
 var log = clog.GetDefaultLogger()
 
 const (
+        CMSUserName                    = "cms"
 	ServiceName                    = "CMS"
 	HomeDir                        = "/opt/cms/"
 	ConfigDir                      = "/etc/cms/"
