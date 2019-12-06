@@ -188,8 +188,8 @@ func (a *App) configureLogs(isStdOut bool, isFileOut bool) {
 	commLogInt.SetLogger(commLog.DefaultLoggerName, a.configuration().LogLevel, nil, ioWriterDefault, false)
 	commLogInt.SetLogger(commLog.SecurityLoggerName, a.configuration().LogLevel, nil, ioWriterSecurity, false)
 
-	slog.Trace("sec log initiated")
-	log.Trace("loggers setup finished")
+	slog.Info(message.LogInit)
+	log.Info(message.LogInit)
 }
 
 func (a *App) Run(args []string) error {
