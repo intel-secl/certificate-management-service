@@ -10,6 +10,7 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
+	"intel/isecl/lib/common/log/message"
 	"intel/isecl/lib/common/crypt"
 	e "intel/isecl/lib/common/exec"
 	"intel/isecl/lib/common/setup"
@@ -265,8 +266,10 @@ func (a *App) Run(args []string) error {
 	case "help":
 		a.printUsage()
 	case "start":
+		log.Info(message.ServiceStart)
 		return a.start()
 	case "stop":
+		log.Info(message.ServiceStop)
 		return a.stop()
 	case "status":
 		return a.status()

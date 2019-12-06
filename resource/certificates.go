@@ -23,6 +23,7 @@ import (
 	"time"
 	v "intel/isecl/lib/common/validation"
 	"github.com/gorilla/mux"
+	commLogMsg "intel/isecl/lib/common/log/message"
 )
 
 // SetCertificates is used to set the endpoints for certificate handling APIs
@@ -53,6 +54,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		[]ct.RoleInfo{ct.RoleInfo{Service: constants.ServiceName, Name: constants.CertApproverGroupName}},
 		true)
 	if !foundRole {
+		slog.Warning(commLogMsg.UnauthorizedAccess)
 		httpWriter.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -68,7 +70,8 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	// certificate requested, this should be part of the path and not a query parameter. I beleive we should be
 	// able to set up the router so that we have the type in the path.
 	certType := httpRequest.URL.Query().Get("certType")
-	if (certType == "") {
+	if certType == "" {
+		slog.Warning(commLogMsg.InvalidInputBadParam)
 		log.Error("resource/certificates:GetCertificates() Query parameter certType missing")
 		httpWriter.Write([]byte("Query parameter certType missing"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
@@ -76,6 +79,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	}
 	certTypeVal := []string{certType}
 	if validateErr := v.ValidateStrings(certTypeVal); validateErr != nil {
+		slog.Warning(commLogMsg.InvalidInputBadParam)
 		log.Error("resource/certificates:GetCertificates() Query parameter certType is in invalid format")
 		httpWriter.Write([]byte("Query parameter certType is in invalid format"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
@@ -84,6 +88,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 
 	responseBodyBytes, err := ioutil.ReadAll(httpRequest.Body)
 	if err != nil {
+		slog.Warning(commLogMsg.InvalidInputBadParam)
 		log.WithError(err).Error("resource/certificates:GetCertificates() Could not read http request body")
 		httpWriter.Write([]byte("Cannot read http request body"))
 		httpWriter.WriteHeader(http.StatusBadRequest)
@@ -92,6 +97,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 
 	pemBlock, _ := pem.Decode(responseBodyBytes)
 	if pemBlock == nil || !strings.Contains (pemBlock.Type, "CERTIFICATE REQUEST") {
+		slog.Warning(commLogMsg.InvalidInputBadEncoding)
 		log.WithError(err).Error("resource/certificates:GetCertificates() Failed to decode pem block containing certificate")
 		httpWriter.WriteHeader(http.StatusBadRequest) 
 		httpWriter.Write([]byte("Failed to decode pem" + err.Error()))
@@ -100,6 +106,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 
 	clientCSR, err := x509.ParseCertificateRequest(pemBlock.Bytes)
 	if err != nil {
+		slog.Warning(commLogMsg.InvalidInputBadParam)
 		log.WithError(err).Error("resource/certificates:GetCertificates() Invalid CSR provided")
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		httpWriter.Write([]byte("Invalid CSR provided: " + err.Error()))
@@ -107,6 +114,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 	}
 	err = clientCSR.CheckSignature()
 	if err != nil {
+		slog.Warning(commLogMsg.InvalidInputBadParam)
 		log.WithError(err).Error("resource/certificates:GetCertificates() CSR signature does not match")
 		httpWriter.WriteHeader(http.StatusBadRequest)
 		httpWriter.Write([]byte("Invalid CSR provided: " + err.Error()))
@@ -115,6 +123,7 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 
 	err = validation.ValidateCertificateRequest(config, clientCSR, certType, ctxMap)
 	if err != nil {
+		slog.Warning(commLogMsg.InvalidInputBadParam)
 		log.WithError(err).Error("resource/certificates:GetCertificates() Invalid CSR provided")
 		log.Tracef("%+v",err)
 		httpWriter.WriteHeader(http.StatusBadRequest)

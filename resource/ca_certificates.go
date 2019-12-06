@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"github.com/gorilla/mux"
+	commLogMsg "intel/isecl/lib/common/log/message"
 )
 
 // SetCACertificates is used to set the endpoints for CA certificate handling APIs
@@ -43,6 +44,7 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 		log.Errorf("resource/ca_certificates:GetCACertificates() Cannot load Issuing CA - %v", issuingCa)
 		log.Tracef("%+v",err)
 		if strings.Contains(err.Error(), "Invalid Query parameter") {
+			slog.Warning(commLogMsg.InvalidInputBadParam)
 			httpWriter.WriteHeader(http.StatusBadRequest)
 			httpWriter.Write([]byte("Invalid Query parameter issuing CA: "+ issuingCa))
 		} else {
