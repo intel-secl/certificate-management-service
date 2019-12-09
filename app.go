@@ -266,9 +266,11 @@ func (a *App) Run(args []string) error {
 	case "help":
 		a.printUsage()
 	case "start":
+		slog.Info(message.ServiceStart)
 		log.Info(message.ServiceStart)
 		return a.start()
 	case "stop":
+		slog.Info(message.ServiceStop)
 		log.Info(message.ServiceStop)
 		return a.stop()
 	case "status":
