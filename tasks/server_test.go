@@ -32,7 +32,5 @@ func TestServerSetupEnv(t *testing.T) {
 	ctx := setup.Context{}
 	s.Run(ctx)
 	assert.Equal(t, 1337, c.Port)
-	assert.Equal(t, "RSA", c.KeyAlgorithm)
-	
 }
 

@@ -57,7 +57,7 @@
 		 Locality:           []string{constants.DefaultLocality},
 		 Province:           []string{constants.DefaultProvince},
 		 CommonName:         "CMS",
-	 }, hosts, ts.Config.KeyAlgorithm, ts.Config.KeyAlgorithmLength)
+	 }, hosts, constants.DefaultKeyAlgorithm, constants.DefaultKeyAlgorithmLength)
 	 if err != nil {
 		return nil, nil, errors.Wrap(err, "tasks/tls:createTLSCert() Could not create CSR")
 	 }

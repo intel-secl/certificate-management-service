@@ -31,7 +31,7 @@ func createIntermediateCACert(cfg *config.Configuration, cn string) (privKey cry
 
 	rCaAttr := constants.GetCaAttribs(constants.Root)
 
-	privKey, pubKey, err := crypt.GenerateKeyPair(cfg.KeyAlgorithm, cfg.KeyAlgorithmLength)
+	privKey, pubKey, err := crypt.GenerateKeyPair(constants.DefaultKeyAlgorithm, constants.DefaultKeyAlgorithmLength)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "tasks/intermediate_ca:createIntermediateCACert() Could not generate Keypair")
 	}

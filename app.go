@@ -35,8 +35,8 @@ import (
 	"intel/isecl/lib/common/middleware"
 
 	"github.com/pkg/errors"
-        commLog "intel/isecl/lib/common/log"
-        commLogInt "intel/isecl/lib/common/log/setup"
+	commLog "intel/isecl/lib/common/log"
+	commLogInt "intel/isecl/lib/common/log/setup"
 	stdlog "log"
 
 	"github.com/gorilla/handlers"
@@ -185,8 +185,8 @@ func (a *App) configureLogs(isStdOut bool, isFileOut bool) {
 	}
 
 	ioWriterSecurity := io.MultiWriter(ioWriterDefault, secLogFile)
-	commLogInt.SetLogger(commLog.DefaultLoggerName, a.configuration().LogLevel, nil, ioWriterDefault, false)
-	commLogInt.SetLogger(commLog.SecurityLoggerName, a.configuration().LogLevel, nil, ioWriterSecurity, false)
+	commLogInt.SetLogger(commLog.DefaultLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogEntryMaxLength}, ioWriterDefault, false)
+	commLogInt.SetLogger(commLog.SecurityLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogEntryMaxLength}, ioWriterSecurity, false)
 
 	slog.Info(message.LogInit)
 	log.Info(message.LogInit)

@@ -46,15 +46,6 @@ func (s Server) Run(c setup.Context) error {
 	fmt.Fprintf(s.ConsoleWriter, "Using HTTPS port: %d\n", s.Config.Port)
 	fmt.Fprintf(s.ConsoleWriter, "Auth Service url :%s", authServiceUrl)
 
-	s.Config.KeyAlgorithm, err = c.GetenvString("CMS_KEY_ALGORITHM", "Certificate Management Service Key Algorithm")
-	if err != nil {
-		s.Config.KeyAlgorithm = constants.DefaultKeyAlgorithm
-	} 
-
-	s.Config.KeyAlgorithmLength, err = c.GetenvInt("CMS_KEY_ALGORITHM_LENGTH", "Certificate Management Service Key Algorithm Length")
-	if err != nil {
-		s.Config.KeyAlgorithmLength = constants.DefaultKeyAlgorithmLength
-	}
 	s.Config.AuthDefender.MaxAttempts = constants.DefaultAuthDefendMaxAttempts
 	s.Config.AuthDefender.IntervalMins = constants.DefaultAuthDefendIntervalMins
 	s.Config.AuthDefender.LockoutDurationMins = constants.DefaultAuthDefendLockoutMins
@@ -95,6 +86,14 @@ func (s Server) Run(c setup.Context) error {
 		s.Config.MaxHeaderBytes = constants.DefaultMaxHeaderBytes
 	} else {
 		s.Config.MaxHeaderBytes = maxHeaderBytes
+	}
+
+	logEntryMaxLength, err := c.GetenvInt(constants.LogEntryMaxlengthEnv, "Maximum length of each entry in a log")
+	if err == nil && logEntryMaxLength >= 100 {
+		s.Config.LogEntryMaxLength = logEntryMaxLength
+	} else {
+		fmt.Println("Invalid Log Entry Max Length defined (should be > 100), using default value:", constants.DefaultLogEntryMaxlength)
+		s.Config.LogEntryMaxLength = constants.DefaultLogEntryMaxlength
 	}
 
 	s.Config.Save()

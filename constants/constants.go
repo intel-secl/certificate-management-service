@@ -66,6 +66,8 @@ const (
 	DefaultWriteTimeout            = 10 * time.Second
 	DefaultIdleTimeout             = 10 * time.Second
 	DefaultMaxHeaderBytes          = 1 << 20
+	LogEntryMaxlengthEnv           = "LOG_ENTRY_MAXLENGTH"
+	DefaultLogEntryMaxlength       = 300
 )
 
 // State represents whether or not a daemon is running or not

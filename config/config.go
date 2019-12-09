@@ -23,9 +23,10 @@ var log = clog.GetDefaultLogger()
 // Configuration is the global configuration struct that is marshalled/unmarshaled to a persisted yaml file
 // Probably should embed a config generic struct
 type Configuration struct {
-	configFile       string
-	Port             int
-	LogLevel         logrus.Level
+	configFile             string
+	Port                   int
+	LogLevel               logrus.Level
+	LogEntryMaxLength      int
 	AuthServiceUrl         string
 
 	CACertValidity         int
@@ -33,9 +34,6 @@ type Configuration struct {
 	Locality               string
 	Province               string
 	Country                string
-	KeyAlgorithm           string
-	KeyAlgorithmLength     int
-	RootCACertDigest       string
 	TlsCertDigest          string
 	TokenDurationMins      int
 

@@ -31,7 +31,7 @@
 	log.Trace("tasks/authtoken:createCmsAuthToken() Entering")
 	defer log.Trace("tasks/authtoken:createCmsAuthToken() Leaving")
 
-	cert, key, err := crypt.CreateKeyPairAndCertificate("CMS JWT Signing", "", at.Config.KeyAlgorithm, at.Config.KeyAlgorithmLength)
+	cert, key, err := crypt.CreateKeyPairAndCertificate("CMS JWT Signing", "", constants.DefaultKeyAlgorithm, constants.DefaultKeyAlgorithmLength)
 	if err != nil {
 	   return errors.Wrap(err, "tasks/authtoken:createCmsAuthToken() Could not create CMS JWT certificate")			   
 	}
@@ -80,6 +80,7 @@
 	 if err != nil {
 		 return errors.Wrap(err, "tasks/authtoken:createCmsAuthToken() Could not create CMS JWT token")			   
 	 }
+	 at.Config.Save();
 	 fmt.Println("\nJWT Token:",jwt)
 	 return
  }

@@ -4,25 +4,24 @@
  */
  package tasks
 
- import (
-	 "crypto/rand"
-	 "crypto"
-	 "crypto/x509"
-	 "crypto/x509/pkix"
-	 "flag"
-	 "fmt"
-	 "intel/isecl/lib/common/setup"
-	 "intel/isecl/cms/utils"
-	 "intel/isecl/cms/config"
-	 "intel/isecl/cms/constants"
-	 "intel/isecl/lib/common/crypt"
-	 "io"
-	 "io/ioutil"
-	 "os"
-	 "time"	
-	 "github.com/pkg/errors"
-	 clog "intel/isecl/lib/common/log"
- )
+import (
+	"crypto"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"flag"
+	"fmt"
+	"github.com/pkg/errors"
+	"intel/isecl/cms/config"
+	"intel/isecl/cms/constants"
+	"intel/isecl/cms/utils"
+	"intel/isecl/lib/common/crypt"
+	clog "intel/isecl/lib/common/log"
+	"intel/isecl/lib/common/setup"
+	"io"
+	"os"
+	"time"
+)
  var log = clog.GetDefaultLogger()
  var slog = clog.GetSecurityLogger()
 
@@ -79,7 +78,7 @@
 	log.Trace("tasks/rootca:createRootCACert() Entering")
 	defer log.Trace("tasks/rootca:createRootCACert() Leaving")
 
-	privKey, pubKey, err := crypt.GenerateKeyPair(cfg.KeyAlgorithm, cfg.KeyAlgorithmLength)
+	privKey, pubKey, err := crypt.GenerateKeyPair(constants.DefaultKeyAlgorithm, constants.DefaultKeyAlgorithmLength)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "tasks/rootca:createRootCACert() Could not create root key pair")
 	}
@@ -167,19 +166,6 @@ func updateConfig(cfg *config.Configuration, c setup.Context) (err error){
 		 if err != nil {
 			return errors.Wrap(err, "tasks/rootca:Run() Could not save root certificate")
 		}
-
-		//store SHA384 of ROOT CA for further use
-		rootCACertificateBytes, err := ioutil.ReadFile(constants.RootCACertPath)
-		if err != nil {
-			return errors.Wrap(err, "tasks/rootca:Run() Could not read")
-		}
-		caDigest, err := crypt.GetCertHashFromPemInHex(rootCACertificateBytes, crypto.SHA384)
-		if err != nil {
-			return errors.Wrap(err, "tasks/rootca:Run() Unable to get digest of root certificate")
-		}
-		ca.Config.RootCACertDigest = caDigest
-		ca.Config.Save();
-		fmt.Println("Root CA Certificate Digest : ", caDigest)
 	 } else {
 		 fmt.Println("Root CA already configured, skipping")
 	 }
