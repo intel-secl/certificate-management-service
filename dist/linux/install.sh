@@ -12,7 +12,7 @@ fi
 
 if [ -z $env_file ]; then
     echo No .env file found
-    CMS_NOSETUP="true"
+    CMS_NOSETUP="false"
 else
     source $env_file
     env_file_exports=$(cat $env_file | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
