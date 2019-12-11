@@ -35,7 +35,7 @@ docker-zip: installer
 	cp dist/docker/Dockerfile out/docker-cms/Dockerfile
 	zip -r out/docker-cms.zip out/docker-cms	
 
-all: docker
+all: clean installer
 
 clean:
 	rm -f cover.*
