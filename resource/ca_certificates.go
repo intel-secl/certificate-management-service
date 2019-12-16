@@ -46,7 +46,7 @@ func GetCACertificates(httpWriter http.ResponseWriter, httpRequest *http.Request
 		if strings.Contains(err.Error(), "Invalid Query parameter") {
 			slog.Warning(commLogMsg.InvalidInputBadParam)
 			httpWriter.WriteHeader(http.StatusBadRequest)
-			httpWriter.Write([]byte("Invalid Query parameter issuing CA: "+ issuingCa))
+			httpWriter.Write([]byte("Invalid Query parameter provided"))
 		} else {
 			httpWriter.WriteHeader(http.StatusInternalServerError)
 			httpWriter.Write([]byte("Cannot load Issuing CA"))
