@@ -364,8 +364,14 @@ func (a *App) fnGetJwtCerts() error {
 	defer log.Trace("app:fnGetJwtCerts() Leaving")
 
 	c := a.configuration()
+	if(!strings.HasSuffix(c.AuthServiceUrl, "/")){
+		c.AuthServiceUrl = c.AuthServiceUrl + "/"
+	}
 	url := c.AuthServiceUrl + "noauth/jwt-certificates"
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return errors.Wrap(err, "app:fnGetJwtCerts() Could not create http request")
+	}
 	req.Header.Add("accept", "application/x-pem-file")
 	rootCaCertPems, err := cos.GetDirFileContents(constants.RootCADirPath, "*.pem" )
 	if err != nil {
