@@ -185,8 +185,8 @@ func (a *App) configureLogs(isStdOut bool, isFileOut bool) {
 	}
 
 	ioWriterSecurity := io.MultiWriter(ioWriterDefault, secLogFile)
-	commLogInt.SetLogger(commLog.DefaultLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogEntryMaxLength}, ioWriterDefault, false)
-	commLogInt.SetLogger(commLog.SecurityLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogEntryMaxLength}, ioWriterSecurity, false)
+	commLogInt.SetLogger(commLog.DefaultLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogMaxLength}, ioWriterDefault, false)
+	commLogInt.SetLogger(commLog.SecurityLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogMaxLength}, ioWriterSecurity, false)
 
 	slog.Info(message.LogInit)
 	log.Info(message.LogInit)
@@ -230,13 +230,7 @@ func (a *App) Run(args []string) error {
 	defer secLogFile.Close()
 	defer defaultLogFile.Close()
 
-	//bin := args[0]
-	isStdOut := false
-	isCMSConsoleEnabled := os.Getenv("CMS_ENABLE_CONSOLE_LOG")
-	if isCMSConsoleEnabled == "true" {
-		isStdOut = true
-	}
-	a.configureLogs(isStdOut, true)
+	a.configureLogs(a.configuration().LogEnableStdout, true)
 	cmd := args[1]
 	switch cmd {
 	default:
@@ -285,7 +279,6 @@ func (a *App) Run(args []string) error {
 	case "version":
 		fmt.Fprintf(a.consoleWriter(), "Certificate Management Service %s-%s\n", version.Version, version.GitHash)
 	case "setup":
-
 		if len(args) <= 2 {
 			a.printUsage()
 			log.Error("app:Run() Invalid command")

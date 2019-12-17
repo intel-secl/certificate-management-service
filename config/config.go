@@ -26,7 +26,8 @@ type Configuration struct {
 	configFile             string
 	Port                   int
 	LogLevel               logrus.Level
-	LogEntryMaxLength      int
+	LogEnableStdout        bool
+	LogMaxLength           int
 	AuthServiceUrl         string
 
 	CACertValidity         int

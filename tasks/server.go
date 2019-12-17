@@ -5,13 +5,14 @@
 package tasks
 
 import (
-	"github.com/pkg/errors"
 	"flag"
 	"fmt"
-	"intel/isecl/lib/common/setup"
+	"github.com/pkg/errors"
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/constants"
+	"intel/isecl/lib/common/setup"
 	"io"
+	"strconv"
 	"time"
 )
 
@@ -88,12 +89,21 @@ func (s Server) Run(c setup.Context) error {
 		s.Config.MaxHeaderBytes = maxHeaderBytes
 	}
 
-	logEntryMaxLength, err := c.GetenvInt(constants.LogEntryMaxlengthEnv, "Maximum length of each entry in a log")
-	if err == nil && logEntryMaxLength >= 100 {
-		s.Config.LogEntryMaxLength = logEntryMaxLength
+	logMaxLength, err := c.GetenvInt(constants.LogEntryMaxlengthEnv, "Maximum length of each entry in a log")
+	if err == nil && logMaxLength >= 100 {
+		s.Config.LogMaxLength = logMaxLength
 	} else {
 		fmt.Println("Invalid Log Entry Max Length defined (should be > 100), using default value:", constants.DefaultLogEntryMaxlength)
-		s.Config.LogEntryMaxLength = constants.DefaultLogEntryMaxlength
+		s.Config.LogMaxLength = constants.DefaultLogEntryMaxlength
+	}
+
+	s.Config.LogEnableStdout = false
+	logEnableStdout, err := c.GetenvString("CMS_ENABLE_CONSOLE_LOG", "Certificate Management Service Enable standard output")
+	if err == nil  && logEnableStdout != "" {
+		s.Config.LogEnableStdout, err = strconv.ParseBool(logEnableStdout)
+		if err != nil{
+			log.Info("Error while parsing the variable CMS_ENABLE_CONSOLE_LOG, setting to default value false")
+		}
 	}
 
 	s.Config.Save()
