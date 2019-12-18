@@ -59,13 +59,6 @@ func GetCertificates(httpWriter http.ResponseWriter, httpRequest *http.Request, 
 		return
 	}
 
-	if httpRequest.Header.Get("Accept") != "application/x-pem-file" || httpRequest.Header.Get("Content-Type") != "application/x-pem-file" {
-		slog.Warn("resource/certificates:GetCertificates() Accept type not supported")
-		httpWriter.WriteHeader(http.StatusNotAcceptable)
-		httpWriter.Write([]byte("Accept type not supported"))
-		return
-	}
-
 	// TODO: this is a POST.. we should not be having Query parameters here. If we need to distinguish the type of 
 	// certificate requested, this should be part of the path and not a query parameter. I beleive we should be
 	// able to set up the router so that we have the type in the path.

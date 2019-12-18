@@ -33,15 +33,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 		return fmt.Errorf("validation/validate_CSR:ValidateCertificateRequest() Incorrect Signature Algorithm used (should be SHA 384 with RSA): %v", csr.SignatureAlgorithm)
 	}
 
-	subjectsFromCsr := strings.Split(csr.Subject.String(), ",")
-	subjectFromCsr := ""
-	for _,sub := range subjectsFromCsr {
-		log.Debug(sub);
-		if strings.Contains(sub, "CN=") {
-			subjectFromCsr = sub
-			break
-		}
-	}
+	subjectFromCsr := "CN=" + strings.TrimSpace(csr.Subject.CommonName)
 	// Validate CN
 	sanListsFromToken := []string{}
 	isCnPresentInToken := false
@@ -60,7 +52,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 		}
 	}
 
-	if(!isCnPresentInToken) {
+	if !isCnPresentInToken {
 		return errors.New("validation/validate_CSR:ValidateCertificateRequest() No role associated with provided Common Name in CSR -" + subjectFromCsr)
 	}
 	log.Info("validation/validate_CSR:ValidateCertificateRequest() Got valid Common Name in CSR : " + subjectFromCsr)
