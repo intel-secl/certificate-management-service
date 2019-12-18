@@ -260,12 +260,8 @@ func (a *App) Run(args []string) error {
 	case "help":
 		a.printUsage()
 	case "start":
-		slog.Info(message.ServiceStart)
-		log.Info(message.ServiceStart)
 		return a.start()
 	case "stop":
-		slog.Info(message.ServiceStop)
-		log.Info(message.ServiceStop)
 		return a.stop()
 	case "status":
 		return a.status()
@@ -400,7 +396,6 @@ func (a *App) fnGetJwtCerts() error {
 	if err != nil {
 		return errors.Wrap(err, "app:fnGetJwtCerts() Could not store Certificate")
 	}
-
 	return nil
 }
 
@@ -462,8 +457,7 @@ func (a *App) startServer() error {
 		}
 	}()
 
-	log.Info("app:startServer() Certificate Management Service is running")
-	fmt.Fprintln(a.consoleWriter(), "Certificate Management Service is running")
+	slog.Info(message.ServiceStart)
 	// TODO dispatch Service status checker goroutine
 	<-stop
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -471,6 +465,7 @@ func (a *App) startServer() error {
 	if err := h.Shutdown(ctx); err != nil {
 		return errors.Wrap(err, "app:startServer() Failed to gracefully shutdown webserver")
 	}
+	slog.Info(message.ServiceStop)
 	return nil
 }
 
