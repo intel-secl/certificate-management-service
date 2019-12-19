@@ -32,8 +32,10 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 	if csr.SignatureAlgorithm != x509.SHA384WithRSA {
 		return fmt.Errorf("validation/validate_CSR:ValidateCertificateRequest() Incorrect Signature Algorithm used (should be SHA 384 with RSA): %v", csr.SignatureAlgorithm)
 	}
-
-	subjectFromCsr := "CN=" + strings.TrimSpace(csr.Subject.CommonName)
+	if len(csr.Subject.Names) != 1 {
+		return errors.New("validation/validate_CSR:ValidateCertificateRequest() Only Common Name is supported in Subject")
+	}
+	subjectFromCsr := strings.TrimSpace(csr.Subject.String())
 	// Validate CN
 	sanListsFromToken := []string{}
 	isCnPresentInToken := false
