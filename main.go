@@ -9,49 +9,64 @@ import (
 
 	"os"
 	"os/user"
-	"path"
 	"strconv"
 )
 
-func openLogFiles() (httpLogFile *os.File) {
-	log.Trace("main:openLogFiles() Entering")
-	defer log.Trace("main:openLogFiles() Leaving")
+func openLogFiles() (logFile *os.File, httpLogFile *os.File, secLogFile *os.File) {
 
-	httpLogFilePath := path.Join(constants.LogDir, constants.HTTPLogFile)
-	httpLogFile, err := os.OpenFile(httpLogFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0664)
-	if err != nil {
-		log.Errorf("Could not open HTTP log file")
-	}
+        logFile, _ = os.OpenFile(constants.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0664)
+        os.Chmod(constants.LogFile, 0664)
 
-	cmsUser, err := user.Lookup(constants.CMSUserName)
-	if err != nil {
-		log.Errorf("Could not find user '%s'", constants.CMSUserName)
-	}
+        httpLogFile, _ = os.OpenFile(constants.HTTPLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0664)
+        os.Chmod(constants.HTTPLogFile, 0664)
 
-	uid, err := strconv.Atoi(cmsUser.Uid)
-	if err != nil {
-		log.Errorf("Could not parse cms user uid '%s'", cmsUser.Uid)
-	}
+        secLogFile, _ = os.OpenFile(constants.SecurityLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0664)
+        os.Chmod(constants.SecurityLogFile, 0664)
 
-	gid, err := strconv.Atoi(cmsUser.Gid)
-	if err != nil {
-		log.Errorf("Could not parse cms user gid '%s'", cmsUser.Gid)
-	}
+        cmsUser, err := user.Lookup(constants.CMSUserName)
+        if err != nil {
+                log.Errorf("Could not find user '%s'", constants.CMSUserName)
+        }
 
-	os.Chown(httpLogFilePath, uid, gid)
-	os.Chmod(httpLogFilePath, 0664)
-	return
+        uid, err := strconv.Atoi(cmsUser.Uid)
+        if err != nil {
+                log.Errorf("Could not parse cms user uid '%s'", cmsUser.Uid)
+        }
+
+        gid, err := strconv.Atoi(cmsUser.Gid)
+        if err != nil {
+                log.Errorf("Could not parse cms user gid '%s'", cmsUser.Gid)
+        }
+
+        err = os.Chown(constants.HTTPLogFile, uid, gid)
+        if err != nil {
+                log.Errorf("Could not change file ownership for file: '%s'", constants.HTTPLogFile)
+        }
+        err = os.Chown(constants.SecurityLogFile, uid, gid)
+        if err != nil {
+                log.Errorf("Could not change file ownership for file: '%s'", constants.SecurityLogFile)
+        }
+        err = os.Chown(constants.LogFile, uid, gid)
+        if err != nil {
+                log.Errorf("Could not change file ownership for file: '%s'", constants.LogFile)
+        }
+
+        return
 }
 
 func main() {
 	log.Trace("main:main() Entering")
 	defer log.Trace("main:main() Leaving")
+        l, h, s := openLogFiles()
+        defer l.Close()
+        defer h.Close()
+        defer s.Close()
+        app := &App{
+                LogWriter:     l,
+                HTTPLogWriter: h,
+                SecLogWriter:  s,
+        }
 
-	h := openLogFiles()
-	defer h.Close()
-	app := &App{
-		HTTPLogWriter: h,
-	}
 	err := app.Run(os.Args)
 	if err != nil {
 		log.WithError(err).Error("main:main() CMS application error")		

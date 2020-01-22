@@ -54,6 +54,7 @@ type App struct {
 	ConsoleWriter  io.Writer
 	LogWriter      io.Writer
 	HTTPLogWriter  io.Writer
+	SecLogWriter  io.Writer
 }
 
 func (a *App) printUsage() {
@@ -177,14 +178,14 @@ var defaultLogFile *os.File
 
 func (a *App) configureLogs(isStdOut bool, isFileOut bool) {
 	var ioWriterDefault io.Writer
-	ioWriterDefault = defaultLogFile
+	ioWriterDefault = a.LogWriter
 	if isStdOut && isFileOut {
-		ioWriterDefault = io.MultiWriter(os.Stdout, defaultLogFile)
+		ioWriterDefault = io.MultiWriter(os.Stdout, a.LogWriter)
 	} else if isStdOut && !isFileOut {
 		ioWriterDefault = os.Stdout
 	}
 
-	ioWriterSecurity := io.MultiWriter(ioWriterDefault, secLogFile)
+	ioWriterSecurity := io.MultiWriter(ioWriterDefault, a.SecLogWriter)
 	commLogInt.SetLogger(commLog.DefaultLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogMaxLength}, ioWriterDefault, false)
 	commLogInt.SetLogger(commLog.SecurityLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogMaxLength}, ioWriterSecurity, false)
 
@@ -213,22 +214,6 @@ func (a *App) Run(args []string) error {
         if err != nil {
                return errors.Wrapf(err,"Could not parse cms user gid '%s'", cmsUser.Gid)
         }
-
-	secLogFile, err = os.OpenFile(constants.SecurityLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
-	if err != nil {
-		log.Errorf("Could not open Security log file")
-	}
-	os.Chmod(constants.SecurityLogFile, 0664)
-	defaultLogFile, err = os.OpenFile(constants.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
-	if err != nil {
-		log.Errorf("Could not open default log file")
-	}
-	os.Chmod(constants.LogFile, 0664)
-	os.Chown(constants.LogFile, uid, gid)
-	os.Chown(constants.SecurityLogFile, uid, gid)
-
-	defer secLogFile.Close()
-	defer defaultLogFile.Close()
 
 	a.configureLogs(a.configuration().LogEnableStdout, true)
 	cmd := args[1]
