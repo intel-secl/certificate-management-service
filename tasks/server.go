@@ -45,7 +45,7 @@ func (s Server) Run(c setup.Context) error {
 	}
 	log.Infof("tasks/server:Run() CMS server trying to start on port -%v", s.Config.Port)
 	fmt.Fprintf(s.ConsoleWriter, "Using HTTPS port: %d\n", s.Config.Port)
-	fmt.Fprintf(s.ConsoleWriter, "Auth Service url :%s", authServiceUrl)
+	fmt.Fprintf(s.ConsoleWriter, "Auth Service url :%s", s.Config.AuthServiceUrl)
 
 	s.Config.AuthDefender.MaxAttempts = constants.DefaultAuthDefendMaxAttempts
 	s.Config.AuthDefender.IntervalMins = constants.DefaultAuthDefendIntervalMins
