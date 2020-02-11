@@ -141,6 +141,7 @@ fi
 # check if CMS_NOSETUP is defined
 if [ "${CMS_NOSETUP,,}" == "true" ]; then
     echo "CMS_NOSETUP is true, skipping setup"
+    echo "Run command \"cms setup all\" and start server"
     echo "Installation completed successfully!"
 else 
     $COMPONENT_NAME setup all
