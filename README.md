@@ -84,7 +84,6 @@ OR
 | testify     | github.com/stretchr/testify | v1.3.0                             |
 | crypto      | golang.org/x/crypto         | v0.0.0-20190219172222-a4c6cb3142f2 |
 | yaml.v2     | gopkg.in/yaml.v2            | v2.2.2                             |
-| time        | golang.org/x/time           | v0.0.0-20190308202827-9d24e82272b4 |
 | authservice | intel/isecl/authservice     | v0.0.0	                         |
 | common      | intel/isecl/lib/common      | v1.0.0-Beta                        |
 
