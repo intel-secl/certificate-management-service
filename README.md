@@ -27,7 +27,7 @@ sudo yum install -y git wget makeself
 ```
 
 ### Install `go` version >= `go1.12.12`
-The `Certificate Management Service` requires Go version 1.12.12 that has support for `go modules`. The build was validated with the latest version 1.12.12 of `go`. It is recommended that you use 1.12.12 version of `go`. More recent versions may introduce compatibility issues. You can use the following to install `go`.
+The `Certificate Management Service` requires Go version 1.12.12 that has support for `go modules`. The build was validated with the latest version 1.12.12 of `go`. It is recommended that you use 1.12.12 version of `go`. You can use the following to install `go`.
 ```shell
 wget https://dl.google.com/go/go1.12.12.linux-amd64.tar.gz
 tar -xzf go1.12.12.linux-amd64.tar.gz
