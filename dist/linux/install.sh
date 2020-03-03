@@ -12,7 +12,9 @@ fi
 
 if [ -z $env_file ]; then
     echo No .env file found
-    CMS_NOSETUP="false"
+    if [[ -n $CMS_NOSETUP && $CMS_NOSETUP != "true" ]]; then
+        CMS_NOSETUP="false"
+    fi
 else
     source $env_file
     env_file_exports=$(cat $env_file | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
@@ -34,7 +36,7 @@ LOG_PATH=/var/log/$COMPONENT_NAME/
 CONFIG_PATH=/etc/$COMPONENT_NAME
 
 echo "Setting up Certificate Management Service Linux User..."
-id -u cms 2> /dev/null || useradd --comment "Certificate Management Service" --home $PRODUCT_HOME --system --shell /bin/false cms
+id -u cms 2> /dev/null || useradd --comment "Certificate Management Service" --home $PRODUCT_HOME  --shell /bin/false cms
 
 mkdir -p $BIN_PATH && chown cms:cms $BIN_PATH/
 cp $COMPONENT_NAME $BIN_PATH/ && chown cms:cms $BIN_PATH/*
@@ -139,6 +141,7 @@ fi
 # check if CMS_NOSETUP is defined
 if [ "${CMS_NOSETUP,,}" == "true" ]; then
     echo "CMS_NOSETUP is true, skipping setup"
+    echo "Run command \"cms setup all\" and start server"
     echo "Installation completed successfully!"
 else 
     $COMPONENT_NAME setup all

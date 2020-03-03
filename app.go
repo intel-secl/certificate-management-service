@@ -54,42 +54,72 @@ type App struct {
 	ConsoleWriter  io.Writer
 	LogWriter      io.Writer
 	HTTPLogWriter  io.Writer
+	SecLogWriter  io.Writer
 }
 
 func (a *App) printUsage() {
 	w := a.consoleWriter()
+
 	fmt.Fprintln(w, "Usage:")
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "    cms <command> [arguments]")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Avaliable Commands:")
-	fmt.Fprintln(w, "    help|-h|-help    Show this help message")
-	fmt.Fprintln(w, "    setup [task]     Run setup task")
-	fmt.Fprintln(w, "    start            Start cms")
-	fmt.Fprintln(w, "    status           Show the status of cms")
-	fmt.Fprintln(w, "    stop             Stop cms")
-	fmt.Fprintln(w, "    tlscertsha384    Show the SHA384 of the certificate used for TLS")
-	fmt.Fprintln(w, "    uninstall        Uninstall cms")
-	fmt.Fprintln(w, "    version          Show the version of cms")
+	fmt.Fprintln(w, "    -h|--help            Show this help message")
+	fmt.Fprintln(w, "    setup [task]         Run setup task")
+	fmt.Fprintln(w, "    start                Start cms")
+	fmt.Fprintln(w, "    status               Show the status of cms")
+	fmt.Fprintln(w, "    stop                 Stop cms")
+	fmt.Fprintln(w, "    tlscertsha384        Show the SHA384 digest of the certificate used for TLS")
+	fmt.Fprintln(w, "    uninstall [--purge]  Uninstall cms. --purge option needs to be applied to remove configuration and data files")
+	fmt.Fprintln(w, "    -v|--version         Show the version of cms")
 	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "Avaliable Tasks for setup:")
-	fmt.Fprintln(w, "    cms setup server [--port=<port>]")
-	fmt.Fprintln(w, "        - Setup http server on <port>")
-	fmt.Fprintln(w, "        - Environment variable CMS_PORT=<port> can be set alternatively")
-	fmt.Fprintln(w, "    cms setup root_ca [--force]")
-	fmt.Fprintln(w, "        - Create its own self signed Root CA keypair in /etc/cms/root-ca/ for quality of life")
-	fmt.Fprintln(w, "        - Option [--force] overwrites any existing files, and always generate new Root CA keypair")
-	fmt.Fprintln(w, "    cms setup intermediate_ca [--force]")
-	fmt.Fprintln(w, "        - Create its own root_ca signed intermediate CA keypair(signing, tls-server and tls-client) in /etc/cms/intermediate-ca/ for quality of life")
-	fmt.Fprintln(w, "        - Option [--force] overwrites any existing files, and always generate new root_ca signed Intermediate CA keypair")
-	fmt.Fprintln(w, "    cms setup tls [--force] [--host_names=<host_names>]")
-	fmt.Fprintln(w, "        - Create its own intermediate_ca signed TLS keypair in /etc/cms for quality of life")
-	fmt.Fprintln(w, "        - Option [--force] overwrites any existing files, and always generate intermediate_ca signed TLS keypair")
-	fmt.Fprintln(w, "        - Argument <host_names> is a list of host names used by local machine, seperated by comma")
-	fmt.Fprintln(w, "        - Environment variable SAN_LIST=<host_names> can be set alternatively")
-	fmt.Fprintln(w, "    cms setup cms_auth_token [--force]")
-	fmt.Fprintln(w, "        - Create its own self signed JWT keypair in /etc/cms/jwt for quality of life")
-	fmt.Fprintln(w, "        - Option [--force] overwrites any existing files, and always generate new JWT keypair and token")
+	fmt.Fprintln(w, "Setup command usage:     cms setup [task] [--arguments=<argument_value>] [--force]")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "Available Tasks for setup:")
+	fmt.Fprintln(w, "    all                       Runs all setup tasks")
+	fmt.Fprintln(w, "                              Required env variables:")
+	fmt.Fprintln(w, "                                  - get required env variables from all the setup tasks")
+	fmt.Fprintln(w, "                              Optional env variables:")
+	fmt.Fprintln(w, "                                  - get optional env variables from all the setup tasks")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "    root_ca                   Creates a self signed Root CA keypair in /etc/cms/root-ca/ for quality of life")
+	fmt.Fprintln(w, "                              - Option [--force] overwrites any existing files, and always generate new Root CA keypair")
+	fmt.Fprintln(w, "                              Optional env variables specific to setup task are:")
+	fmt.Fprintln(w, "                                  - CMS_CA_CERT_VALIDITY=<cert life span in years>     : Certificate Management Service Root Certificate Validity")
+	fmt.Fprintln(w, "                                  - CMS_CA_ORGANIZATION=<cert org>                     : Certificate Management Service Root Certificate Organization")
+	fmt.Fprintln(w, "                                  - CMS_CA_LOCALITY=<cert locality>                    : Certificate Management Service Root Certificate Locality")
+	fmt.Fprintln(w, "                                  - CMS_CA_PROVINCE=<cert province>                    : Certificate Management Service Root Certificate Province")
+	fmt.Fprintln(w, "                                  - CMS_CA_COUNTRY=<cert country>                      : Certificate Management Service Root Certificate Country")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "    intermediate_ca           Creates a root_ca signed intermediate CA keypair(signing, tls-server and tls-client) in /etc/cms/intermediate-ca/ for quality of life")
+	fmt.Fprintln(w, "                              - Option [--force] overwrites any existing files, and always generate new root_ca signed Intermediate CA keypair")
+	fmt.Fprintln(w, "                              Available argument specific to setup task is:")
+	fmt.Fprintln(w, "                                  - type          available options are: TLS, TLS-Client, Signing")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "    tls                       Creates an intermediate_ca signed TLS keypair in /etc/cms for quality of life")
+	fmt.Fprintln(w, "                              - Option [--force] overwrites any existing files, and always generate intermediate_ca signed TLS keypair")
+	fmt.Fprintln(w, "                              Available argument and optional env variable specific to setup task is:")
+	fmt.Fprintln(w, "                                  - host_names   alternatively, set environment variable SAN_LIST")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "    server                    Setup http server on given port")
+	fmt.Fprintln(w, "                              Available arguments and optional env variables specific to task are:")
+	fmt.Fprintln(w, "                                  - port         alternatively, set environment variable CMS_PORT")
+	fmt.Fprintln(w, "                                  - aas-url      alternatively, set environment variable AAS_API_URL")
+	fmt.Fprintln(w, "                              Optional env variables specific to setup task are:")
+	fmt.Fprintln(w, "                                  - CMS_SERVER_READ_TIMEOUT=<read timeout in seconds>                    : Certificate Management Service Read Timeout")
+	fmt.Fprintln(w, "                                  - CMS_SERVER_READ_HEADER_TIMEOUT=<read header timeout in seconds>      : Certificate Management Service Read Header Timeout")
+	fmt.Fprintln(w, "                                  - CMS_SERVER_WRITE_TIMEOUT=<write timeout in seconds>                  : Certificate Management Service Write Timeout")
+	fmt.Fprintln(w, "                                  - CMS_SERVER_IDLE_TIMEOUT=<idle timeout in seconds>                    : Certificate Management Service Idle Timeout")
+	fmt.Fprintln(w, "                                  - CMS_SERVER_MAX_HEADER_BYTES=<max header bytes>            : Certificate Management Service Max Header Bytes")
+	fmt.Fprintln(w, "                                  - LOG_ENTRY_MAXLENGTH=<log max length>                      : Maximum length of each entry in a log")
+	fmt.Fprintln(w, "                                  - CMS_ENABLE_CONSOLE_LOG=<bool>                             : Certificate Management Service Enable standard output")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "    cms_auth_token            Create its own self signed JWT keypair in /etc/cms/jwt for quality of life")
+	fmt.Fprintln(w, "                              - Option [--force] overwrites any existing files, and always generate new JWT keypair and token")
+	fmt.Fprintln(w, "                              Optional env variables specific to setup task are:")
+	fmt.Fprintln(w, "                                  - AAS_JWT_CN=<jwt common-name>          : Authentication and Authorization JWT Common Name")
+	fmt.Fprintln(w, "                                  - AAS_TLS_CN=<tls common-name>          : Authentication and Authorization TLS Common Name")
+	fmt.Fprintln(w, "                                  - AAS_TLS_SAN=<tls SAN>                 : Authentication and Authorization TLS SAN list")
 	fmt.Fprintln(w, "")
 }
 
@@ -177,14 +207,14 @@ var defaultLogFile *os.File
 
 func (a *App) configureLogs(isStdOut bool, isFileOut bool) {
 	var ioWriterDefault io.Writer
-	ioWriterDefault = defaultLogFile
+	ioWriterDefault = a.LogWriter
 	if isStdOut && isFileOut {
-		ioWriterDefault = io.MultiWriter(os.Stdout, defaultLogFile)
+		ioWriterDefault = io.MultiWriter(os.Stdout, a.LogWriter)
 	} else if isStdOut && !isFileOut {
 		ioWriterDefault = os.Stdout
 	}
 
-	ioWriterSecurity := io.MultiWriter(ioWriterDefault, secLogFile)
+	ioWriterSecurity := io.MultiWriter(ioWriterDefault, a.SecLogWriter)
 	commLogInt.SetLogger(commLog.DefaultLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogMaxLength}, ioWriterDefault, false)
 	commLogInt.SetLogger(commLog.SecurityLoggerName, a.configuration().LogLevel, &commLog.LogFormatter{MaxLength: a.configuration().LogMaxLength}, ioWriterSecurity, false)
 
@@ -214,22 +244,6 @@ func (a *App) Run(args []string) error {
                return errors.Wrapf(err,"Could not parse cms user gid '%s'", cmsUser.Gid)
         }
 
-	secLogFile, err = os.OpenFile(constants.SecurityLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
-	if err != nil {
-		log.Errorf("Could not open Security log file")
-	}
-	os.Chmod(constants.SecurityLogFile, 0664)
-	defaultLogFile, err = os.OpenFile(constants.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
-	if err != nil {
-		log.Errorf("Could not open default log file")
-	}
-	os.Chmod(constants.LogFile, 0664)
-	os.Chown(constants.LogFile, uid, gid)
-	os.Chown(constants.SecurityLogFile, uid, gid)
-
-	defer secLogFile.Close()
-	defer defaultLogFile.Close()
-
 	a.configureLogs(a.configuration().LogEnableStdout, true)
 	cmd := args[1]
 	switch cmd {
@@ -251,13 +265,7 @@ func (a *App) Run(args []string) error {
 			time.Sleep(10 * time.Millisecond)
 			return errors.Wrap(err, "app:Run() Error starting CMS service")
 		}
-	case "-help":
-		fallthrough
-	case "--h":
-		fallthrough
-	case "--help":
-		fallthrough
-	case "help":
+	case "-h", "--help":
 		a.printUsage()
 	case "start":
 		return a.start()
@@ -272,7 +280,7 @@ func (a *App) Run(args []string) error {
 		a.uninstall(purge)
 		log.Info("app:Run() Uninstalled Certificate Management Service")
 		os.Exit(0)
-	case "version":
+	case "--version", "-v":
 		fmt.Fprintf(a.consoleWriter(), "Certificate Management Service %s-%s\n", version.Version, version.GitHash)
 	case "setup":
 		if len(args) <= 2 {

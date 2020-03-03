@@ -77,7 +77,7 @@ func (ca Intermediate_Ca) Run(c setup.Context) error {
 	} else {
 		if attr := constants.GetCaAttribs(interCAType); attr.CommonName == "" {
 			// the type passed in does not match with one of the supported intermediaries
-			return errors.Wrap(err, "tasks/intermediate_ca:Run() could not find matching Intermediary Certificate. Please check help for list of Intermediary CAs supported")
+			return errors.New("tasks/intermediate_ca:Run() could not find matching Intermediary Certificate. Please check help for list of Intermediary CAs supported")
 		}
 		cas = append(cas, interCAType)
 	}
