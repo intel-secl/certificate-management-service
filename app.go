@@ -281,7 +281,7 @@ func (a *App) Run(args []string) error {
 		log.Info("app:Run() Uninstalled Certificate Management Service")
 		os.Exit(0)
 	case "--version", "-v":
-		fmt.Fprintf(a.consoleWriter(), "Certificate Management Service %s-%s\n", version.Version, version.GitHash)
+		fmt.Fprintf(a.consoleWriter(), "Certificate Management Service %s-%s\nBuilt %s\n", version.Version, version.GitHash, version.BuildDate)
 	case "setup":
 		if len(args) <= 2 {
 			a.printUsage()
