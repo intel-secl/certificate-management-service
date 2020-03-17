@@ -10,34 +10,35 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
-	"intel/isecl/lib/common/log/message"
-	"intel/isecl/lib/common/crypt"
-	e "intel/isecl/lib/common/exec"
-	"intel/isecl/lib/common/setup"
-	"intel/isecl/lib/common/validation"
-	cos "intel/isecl/lib/common/os"
 	"intel/isecl/cms/config"
 	"intel/isecl/cms/constants"
 	"intel/isecl/cms/resource"
 	"intel/isecl/cms/tasks"
 	"intel/isecl/cms/version"
+	"intel/isecl/lib/common/crypt"
+	e "intel/isecl/lib/common/exec"
+	"intel/isecl/lib/common/log/message"
+	"intel/isecl/lib/common/middleware"
+	cos "intel/isecl/lib/common/os"
+	"intel/isecl/lib/common/setup"
+	"intel/isecl/lib/common/validation"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
-	"os/user"
 	"os/signal"
+	"os/user"
+	"strconv"
 	"strings"
 	"syscall"
-	"strconv"
 	"time"
-	"intel/isecl/lib/common/middleware"
 
-	"github.com/pkg/errors"
 	commLog "intel/isecl/lib/common/log"
 	commLogInt "intel/isecl/lib/common/log/setup"
 	stdlog "log"
+
+	"github.com/pkg/errors"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -54,7 +55,7 @@ type App struct {
 	ConsoleWriter  io.Writer
 	LogWriter      io.Writer
 	HTTPLogWriter  io.Writer
-	SecLogWriter  io.Writer
+	SecLogWriter   io.Writer
 }
 
 func (a *App) printUsage() {
@@ -230,26 +231,26 @@ func (a *App) Run(args []string) error {
 	}
 	var err error
 	cmsUser, err := user.Lookup(constants.CMSUserName)
-        if err != nil {
-                return errors.Wrapf(err,"Could not find user '%s'", constants.CMSUserName)
-        }
+	if err != nil {
+		return errors.Wrapf(err, "Could not find user '%s'", constants.CMSUserName)
+	}
 
-        uid, err := strconv.Atoi(cmsUser.Uid)
-        if err != nil {
-                return errors.Wrapf(err,"Could not parse cms user uid '%s'", cmsUser.Uid)
-        }
+	uid, err := strconv.Atoi(cmsUser.Uid)
+	if err != nil {
+		return errors.Wrapf(err, "Could not parse cms user uid '%s'", cmsUser.Uid)
+	}
 
-        gid, err := strconv.Atoi(cmsUser.Gid)
-        if err != nil {
-               return errors.Wrapf(err,"Could not parse cms user gid '%s'", cmsUser.Gid)
-        }
+	gid, err := strconv.Atoi(cmsUser.Gid)
+	if err != nil {
+		return errors.Wrapf(err, "Could not parse cms user gid '%s'", cmsUser.Gid)
+	}
 
 	a.configureLogs(a.configuration().LogEnableStdout, true)
 	cmd := args[1]
 	switch cmd {
 	default:
 		a.printUsage()
-		return errors.New("Unrecognized command: " + args[1])	
+		return errors.New("Unrecognized command: " + args[1])
 	case "tlscertsha384":
 		hash, err := crypt.GetCertHexSha384(constants.TLSCertPath)
 		if err != nil {
@@ -313,25 +314,25 @@ func (a *App) Run(args []string) error {
 					ConsoleWriter: os.Stdout,
 				},
 				tasks.Root_Ca{
-					Flags:            flags,
-					ConsoleWriter:    os.Stdout,
-					Config:           a.configuration(),
+					Flags:         flags,
+					ConsoleWriter: os.Stdout,
+					Config:        a.configuration(),
 				},
 				tasks.Intermediate_Ca{
-					Flags:            flags,
-					ConsoleWriter:    os.Stdout,
-					Config:           a.configuration(),
+					Flags:         flags,
+					ConsoleWriter: os.Stdout,
+					Config:        a.configuration(),
 				},
 				tasks.TLS{
-					Flags:            flags,
-					ConsoleWriter:    os.Stdout,
-					Config:           a.configuration(),
+					Flags:         flags,
+					ConsoleWriter: os.Stdout,
+					Config:        a.configuration(),
 				},
 				tasks.Cms_Auth_Token{
 					Flags:         flags,
 					ConsoleWriter: os.Stdout,
 					Config:        a.configuration(),
-				},				
+				},
 			},
 			AskInput: false,
 		}
@@ -344,12 +345,12 @@ func (a *App) Run(args []string) error {
 			fmt.Println("Error running setup: ", err)
 			return errors.Wrap(err, "app:Run() Error running setup")
 		}
-	
+
 		//Change the fileownership to cms user
 
-		err = cos.ChownR(constants.ConfigDir,uid,gid)
+		err = cos.ChownR(constants.ConfigDir, uid, gid)
 		if err != nil {
-			return errors.Wrap(err,"Error while changing file ownership")
+			return errors.Wrap(err, "Error while changing file ownership")
 		}
 
 	}
@@ -361,7 +362,7 @@ func (a *App) fnGetJwtCerts() error {
 	defer log.Trace("app:fnGetJwtCerts() Leaving")
 
 	c := a.configuration()
-	if(!strings.HasSuffix(c.AuthServiceUrl, "/")){
+	if !strings.HasSuffix(c.AuthServiceUrl, "/") {
 		c.AuthServiceUrl = c.AuthServiceUrl + "/"
 	}
 	url := c.AuthServiceUrl + "noauth/jwt-certificates"
@@ -370,7 +371,7 @@ func (a *App) fnGetJwtCerts() error {
 		return errors.Wrap(err, "app:fnGetJwtCerts() Could not create http request")
 	}
 	req.Header.Add("accept", "application/x-pem-file")
-	rootCaCertPems, err := cos.GetDirFileContents(constants.RootCADirPath, "*.pem" )
+	rootCaCertPems, err := cos.GetDirFileContents(constants.RootCADirPath, "*.pem")
 	if err != nil {
 		return errors.Wrap(err, "app:fnGetJwtCerts() Could not read root CA certificate")
 	}
@@ -380,24 +381,24 @@ func (a *App) fnGetJwtCerts() error {
 	if rootCAs == nil {
 		rootCAs = x509.NewCertPool()
 	}
-	for _, rootCACert := range rootCaCertPems{
+	for _, rootCACert := range rootCaCertPems {
 		if ok := rootCAs.AppendCertsFromPEM(rootCACert); !ok {
-	                return err
-	        }
+			return err
+		}
 	}
 	httpClient := &http.Client{
-				Transport: &http.Transport{
-					TLSClientConfig: &tls.Config{
-						InsecureSkipVerify: false,
-						RootCAs: rootCAs,
-						},
-					},
-				}
-	
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: false,
+				RootCAs:            rootCAs,
+			},
+		},
+	}
+
 	res, err := httpClient.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "app:fnGetJwtCerts() Could not retrieve jwt certificate")
-    }
+	}
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 	err = crypt.SavePemCertWithShortSha1FileName(body, constants.TrustedJWTSigningCertsDir)
@@ -415,10 +416,14 @@ func (a *App) startServer() error {
 
 	// Create Router, set routes
 	r := mux.NewRouter()
-	sr := r.PathPrefix("/cms/v1").Subrouter()	
+
+	// ISECL-8715 - Prevent potential open redirects to external URLs
+	r.SkipClean(true)
+
+	sr := r.PathPrefix("/cms/v1").Subrouter()
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
-			s(sr,c)
+			s(sr, c)
 		}
 	}(resource.SetVersion, resource.SetCACertificates)
 
@@ -428,7 +433,7 @@ func (a *App) startServer() error {
 		time.Minute*constants.DefaultJwtValidateCacheKeyMins))
 	func(setters ...func(*mux.Router, *config.Configuration)) {
 		for _, s := range setters {
-			s(sr,c)
+			s(sr, c)
 		}
 	}(resource.SetCertificates)
 
@@ -444,15 +449,15 @@ func (a *App) startServer() error {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	httpLog := stdlog.New(a.httpLogWriter(), "", 0)
 	h := &http.Server{
-		Addr:      fmt.Sprintf(":%d", c.Port),
-		Handler:   handlers.RecoveryHandler(handlers.RecoveryLogger(httpLog), handlers.PrintRecoveryStack(true))(handlers.CombinedLoggingHandler(a.httpLogWriter(), r)),
-		ErrorLog:  httpLog,
-		TLSConfig: tlsconfig,
-		ReadTimeout: c.ReadTimeout,
+		Addr:              fmt.Sprintf(":%d", c.Port),
+		Handler:           handlers.RecoveryHandler(handlers.RecoveryLogger(httpLog), handlers.PrintRecoveryStack(true))(handlers.CombinedLoggingHandler(a.httpLogWriter(), r)),
+		ErrorLog:          httpLog,
+		TLSConfig:         tlsconfig,
+		ReadTimeout:       c.ReadTimeout,
 		ReadHeaderTimeout: c.ReadHeaderTimeout,
-		WriteTimeout: c.WriteTimeout,
-		IdleTimeout: c.IdleTimeout,
-		MaxHeaderBytes: c.MaxHeaderBytes,
+		WriteTimeout:      c.WriteTimeout,
+		IdleTimeout:       c.IdleTimeout,
+		MaxHeaderBytes:    c.MaxHeaderBytes,
 	}
 
 	// dispatch web server go routine
@@ -580,7 +585,7 @@ func validateCmdAndEnv(env_names_cmd_opts map[string]string, flags *flag.FlagSet
 	missing, err := validation.ValidateEnvList(env_names)
 	if err != nil && missing != nil {
 		for _, m := range missing {
-			if cmd_f := flags.Lookup(env_names_cmd_opts[m]); cmd_f == nil {				
+			if cmd_f := flags.Lookup(env_names_cmd_opts[m]); cmd_f == nil {
 				return errors.Wrap(err, "app:validateCmdAndEnv() Insufficient arguments")
 			}
 		}
