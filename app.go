@@ -227,31 +227,16 @@ func (a *App) Run(args []string) error {
 
 	if len(args) < 2 {
 		a.printUsage()
-		os.Exit(1)
+		return nil
 	}
-	var err error
-	cmsUser, err := user.Lookup(constants.CMSUserName)
-	if err != nil {
-		return errors.Wrapf(err, "Could not find user '%s'", constants.CMSUserName)
-	}
-
-	uid, err := strconv.Atoi(cmsUser.Uid)
-	if err != nil {
-		return errors.Wrapf(err, "Could not parse cms user uid '%s'", cmsUser.Uid)
-	}
-
-	gid, err := strconv.Atoi(cmsUser.Gid)
-	if err != nil {
-		return errors.Wrapf(err, "Could not parse cms user gid '%s'", cmsUser.Gid)
-	}
-
-	a.configureLogs(a.configuration().LogEnableStdout, true)
 	cmd := args[1]
 	switch cmd {
 	default:
 		a.printUsage()
-		return errors.New("Unrecognized command: " + args[1])
+		fmt.Fprintf(os.Stderr, "Unrecognized command: %s\n", args[1])
+		os.Exit(1)
 	case "tlscertsha384":
+		a.configureLogs(a.configuration().LogEnableStdout, true)
 		hash, err := crypt.GetCertHexSha384(constants.TLSCertPath)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -260,6 +245,7 @@ func (a *App) Run(args []string) error {
 		fmt.Println(hash)
 		return nil
 	case "run":
+		a.configureLogs(a.configuration().LogEnableStdout, true)
 		if err := a.startServer(); err != nil {
 			fmt.Fprintln(os.Stderr, "Error: daemon did not start - ", err.Error())
 			// wait some time for logs to flush - otherwise, there will be no entry in syslog
@@ -268,9 +254,12 @@ func (a *App) Run(args []string) error {
 		}
 	case "-h", "--help":
 		a.printUsage()
+		return nil
 	case "start":
+		a.configureLogs(a.configuration().LogEnableStdout, true)
 		return a.start()
 	case "stop":
+		a.configureLogs(a.configuration().LogEnableStdout, true)
 		return a.stop()
 	case "status":
 		return a.status()
@@ -283,7 +272,9 @@ func (a *App) Run(args []string) error {
 		os.Exit(0)
 	case "--version", "-v":
 		fmt.Fprintf(a.consoleWriter(), "Certificate Management Service %s-%s\nBuilt %s\n", version.Version, version.GitHash, version.BuildDate)
+		return nil
 	case "setup":
+		a.configureLogs(a.configuration().LogEnableStdout, true)
 		if len(args) <= 2 {
 			a.printUsage()
 			log.Error("app:Run() Invalid command")
@@ -347,6 +338,20 @@ func (a *App) Run(args []string) error {
 		}
 
 		//Change the fileownership to cms user
+		cmsUser, err := user.Lookup(constants.CMSUserName)
+		if err != nil {
+			return errors.Wrapf(err, "Could not find user '%s'", constants.CMSUserName)
+		}
+
+		uid, err := strconv.Atoi(cmsUser.Uid)
+		if err != nil {
+			return errors.Wrapf(err, "Could not parse cms user uid '%s'", cmsUser.Uid)
+		}
+
+		gid, err := strconv.Atoi(cmsUser.Gid)
+		if err != nil {
+			return errors.Wrapf(err, "Could not parse cms user gid '%s'", cmsUser.Gid)
+		}
 
 		err = cos.ChownR(constants.ConfigDir, uid, gid)
 		if err != nil {
