@@ -60,7 +60,7 @@ func ValidateCertificateRequest(conf *config.Configuration, csr *x509.Certificat
 	log.Info("validation/validate_CSR:ValidateCertificateRequest() Got valid Common Name in CSR : " + subjectFromCsr)
 
 	// Validate SAN only for TLS
-	if strings.EqualFold(constants.Tls, certType) || strings.EqualFold(constants.TlsClient, certType) {
+	if strings.EqualFold(constants.Tls, certType) {
 		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(IP) requested in CSR - %v ", csr.IPAddresses)
 		log.Debugf("validation/validate_CSR:ValidateCertificateRequest() San list(DNS) requested in CSR - %v ", csr.DNSNames)
 		err := validateDNSNames(csr.DNSNames)
