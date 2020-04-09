@@ -10,7 +10,7 @@ import (
 	"math/big"
 	"io/ioutil"
 	"os"
-	"intel/isecl/cms/constants"
+	"intel/isecl/cms/v2/constants"
 	"strings"
 	"github.com/pkg/errors"
 )

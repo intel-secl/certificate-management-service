@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"intel/isecl/lib/common/external-artifacts/time/rate"
-	clog "intel/isecl/lib/common/log"
+	"intel/isecl/lib/common/v2/external-artifacts/time/rate"
+	clog "intel/isecl/lib/common/v2/log"
 )
 var log = clog.GetDefaultLogger()
 var slog = clog.GetSecurityLogger()

@@ -5,7 +5,7 @@
 package main
 
 import (
-	"intel/isecl/cms/constants"
+	"intel/isecl/cms/v2/constants"
 	"os"
 	"os/user"
 	"strconv"

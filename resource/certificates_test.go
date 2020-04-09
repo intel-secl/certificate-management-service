@@ -15,9 +15,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"intel/isecl/lib/common/setup"
-	"intel/isecl/cms/tasks"
-	"intel/isecl/cms/config"
+	"intel/isecl/lib/common/v2/setup"
+	"intel/isecl/cms/v2/tasks"
+	"intel/isecl/cms/v2/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
