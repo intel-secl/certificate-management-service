@@ -6,8 +6,8 @@
 package tasks
 
 import (
-	"intel/isecl/lib/common/setup"
-	"intel/isecl/cms/config"
+	"intel/isecl/lib/common/v2/setup"
+	"intel/isecl/cms/v2/config"
 	"os"
 
 	"testing"

@@ -10,13 +10,13 @@ import (
 	"net/url"
 	"strings"
 	"net"
-	"intel/isecl/cms/config"
-	"intel/isecl/cms/constants"
+	"intel/isecl/cms/v2/config"
+	"intel/isecl/cms/v2/constants"
 	"github.com/pkg/errors"
-	"intel/isecl/lib/common/validation"
-	types "intel/isecl/lib/common/types/aas"
-	clog "intel/isecl/lib/common/log"
-	"intel/isecl/lib/common/search"
+	"intel/isecl/lib/common/v2/validation"
+	types "intel/isecl/lib/common/v2/types/aas"
+	clog "intel/isecl/lib/common/v2/log"
+	"intel/isecl/lib/common/v2/search"
 )
 var log = clog.GetDefaultLogger()
 var slog = clog.GetSecurityLogger()

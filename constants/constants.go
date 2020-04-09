@@ -6,7 +6,7 @@ package constants
 
 import (
 	"crypto"
-	clog "intel/isecl/lib/common/log"
+	clog "intel/isecl/lib/common/v2/log"
 	"time"
 )
 

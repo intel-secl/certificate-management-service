@@ -7,8 +7,8 @@ package tasks
 import (
         "crypto/x509"
         "encoding/pem"
-	"intel/isecl/cms/config"
-	"intel/isecl/lib/common/setup"
+	"intel/isecl/cms/v2/config"
+	"intel/isecl/lib/common/v2/setup"
 	"os"
 	"io/ioutil"
         "testing"
