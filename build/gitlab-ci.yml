@@ -1,4 +1,4 @@
-image: golang:1.11
+image: golang:1.12
 
 before_script:
   - echo "Acquire::http::Proxy \"${HTTP_PROXY}\";" >> /etc/apt/apt.conf
