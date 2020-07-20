@@ -22,6 +22,8 @@ func TestGetCaCertificates(t *testing.T) {
 	log.Trace("resource/ca_certificates_test:TestGetCaCertificates() Entering")
 	defer log.Trace("resource/ca_certificates_test:TestGetCaCertificates() Leaving")
 
+	t.Skip() // ISECL-11108
+
 	assert := assert.New(t)
 	
 	os.MkdirAll("/etc/cms", os.ModePerm)

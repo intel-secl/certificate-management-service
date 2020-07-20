@@ -28,6 +28,8 @@ func TestGetCertificatesForCsr(t *testing.T) {
 	log.Trace("resource/certificates_test:TestGetCertificatesForCsr() Entering")
 	defer log.Trace("resource/certificates_test:TestGetCertificatesForCsr() Leaving")
 
+	t.Skip() // ISECL-11108
+
 	assert := assert.New(t)
 	
 	os.MkdirAll("/etc/cms", os.ModePerm)
