@@ -23,7 +23,8 @@ func setupRouter() *mux.Router {
 	log.Trace("resource/resource_test:setupRouter() Entering")
 	defer log.Trace("resource/resource_test:setupRouter() Leaving")
 
-
+	//The JWT signature verifier certificate at ./certificate-management-service/resource/test_resources and the
+	//corresponding bearer token needs to be changed after it expires every 20 years
 	r := mux.NewRouter()
 	sr := r.PathPrefix("/cms/v1/certificates").Subrouter()
 	sr.Use(middleware.NewTokenAuth("test_resources", "test_resources", mockRetrieveJWTSigningCerts, time.Hour*1))
