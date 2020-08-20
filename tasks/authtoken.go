@@ -7,17 +7,17 @@
  import (
 	 "flag"
 	 "fmt"
-	 "intel/isecl/lib/common/v2/setup"
-	 "intel/isecl/lib/common/v2/crypt"
-	 "intel/isecl/cms/v2/config"
-	 "intel/isecl/cms/v2/constants"
+	 "intel/isecl/lib/common/v3/setup"
+	 "intel/isecl/lib/common/v3/crypt"
+	 "intel/isecl/cms/v3/config"
+	 "intel/isecl/cms/v3/constants"
 	 "io"
 	 "os"
 	 "time"
 	 "encoding/pem"
 	 "github.com/pkg/errors"
-	 jwtauth "intel/isecl/lib/common/v2/jwt"
-	 ct "intel/isecl/lib/common/v2/types/aas"
+	 jwtauth "intel/isecl/lib/common/v3/jwt"
+	 ct "intel/isecl/lib/common/v3/types/aas"
  )
  
  type Cms_Auth_Token struct {

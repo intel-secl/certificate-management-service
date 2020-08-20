@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/jinzhu/gorm"
-	clog "intel/isecl/lib/common/v2/log"
+	clog "intel/isecl/lib/common/v3/log"
 )
 var log = clog.GetDefaultLogger()
 var slog = clog.GetSecurityLogger()

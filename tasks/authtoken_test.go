@@ -8,8 +8,8 @@
 import (
         "testing"
         "os"
-        "intel/isecl/cms/v2/config"
-        "intel/isecl/lib/common/v2/setup"
+        "intel/isecl/cms/v3/config"
+        "intel/isecl/lib/common/v3/setup"
 
         "github.com/stretchr/testify/assert"
 )
