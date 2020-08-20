@@ -5,8 +5,8 @@
 package resource
 
 import (
-	"intel/isecl/lib/common/v2/middleware"
-	"intel/isecl/cms/v2/config"
+	"intel/isecl/lib/common/v3/middleware"
+	"intel/isecl/cms/v3/config"
 	"github.com/gorilla/mux"
 	"time"
 )

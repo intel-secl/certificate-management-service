@@ -6,8 +6,8 @@ package resource
 
 import (
 	"fmt"
-	"intel/isecl/cms/v2/version"
-	"intel/isecl/cms/v2/config"
+	"intel/isecl/cms/v3/version"
+	"intel/isecl/cms/v3/config"
 	"net/http"
 	"github.com/gorilla/mux"
 )

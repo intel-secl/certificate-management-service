@@ -9,7 +9,7 @@ PROXY_EXISTS := $(shell if [[ "${https_proxy}" || "${http_proxy}" ]]; then echo 
 .PHONY: cms installer docker all test clean
 
 cms:
-	env GOOS=linux GOSUMDB=off GOPROXY=direct go build -ldflags "-X intel/isecl/cms/v2/version.BuildDate=$(BUILDDATE) -X intel/isecl/cms/v2/version.Version=$(VERSION) -X intel/isecl/cms/v2/version.GitHash=$(GITCOMMIT)" -o out/cms
+	env GOOS=linux GOSUMDB=off GOPROXY=direct go build -ldflags "-X intel/isecl/cms/v3/version.BuildDate=$(BUILDDATE) -X intel/isecl/cms/v3/version.Version=$(VERSION) -X intel/isecl/cms/v3/version.GitHash=$(GITCOMMIT)" -o out/cms
 
 installer: cms
 	mkdir -p out/installer

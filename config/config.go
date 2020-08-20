@@ -6,7 +6,7 @@ package config
 
 import (
 	"errors"
-	"intel/isecl/cms/v2/constants"
+	"intel/isecl/cms/v3/constants"
 	"os"
 	"path"
 	"sync"
@@ -14,7 +14,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	clog "intel/isecl/lib/common/v2/log"
+	clog "intel/isecl/lib/common/v3/log"
 )
 var log = clog.GetDefaultLogger()
 

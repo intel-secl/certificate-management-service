@@ -1,4 +1,4 @@
-module intel/isecl/cms/v2
+module intel/isecl/cms/v3
 
 require (
 	github.com/google/uuid v1.1.1
@@ -10,7 +10,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c
 	gopkg.in/yaml.v2 v2.2.2
-	intel/isecl/lib/common/v2 v2.2.0
+	intel/isecl/lib/common/v3 v3.0.0
 )
 
-replace intel/isecl/lib/common/v2 => github.com/intel-secl/common/v2 v2.2.0
+replace intel/isecl/lib/common/v3 => gitlab.devtools.intel.com/sst/isecl/lib/common.git/v3 v3.0/develop

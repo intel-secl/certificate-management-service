@@ -5,14 +5,14 @@
 package resource
 
 import (
-	"intel/isecl/cms/v2/constants"
-	"intel/isecl/cms/v2/config"
+	"intel/isecl/cms/v3/constants"
+	"intel/isecl/cms/v3/config"
 	"fmt"
 	"strings"
 	"net/http"
 	"io/ioutil"
 	"github.com/gorilla/mux"
-	commLogMsg "intel/isecl/lib/common/v2/log/message"
+	commLogMsg "intel/isecl/lib/common/v3/log/message"
 )
 
 // SetCACertificates is used to set the endpoints for CA certificate handling APIs

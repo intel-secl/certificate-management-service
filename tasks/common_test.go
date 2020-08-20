@@ -7,7 +7,7 @@ package tasks
 
 import (
         "os"
-	"intel/isecl/cms/v2/constants"
+	"intel/isecl/cms/v3/constants"
 )
 
 func CreateSerialNumberFileAndJWTDir(){
