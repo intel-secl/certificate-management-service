@@ -47,9 +47,6 @@ func (s Server) Run(c setup.Context) error {
 	fmt.Fprintf(s.ConsoleWriter, "Using HTTPS port: %d\n", s.Config.Port)
 	fmt.Fprintf(s.ConsoleWriter, "Auth Service url :%s", s.Config.AuthServiceUrl)
 
-	s.Config.AuthDefender.MaxAttempts = constants.DefaultAuthDefendMaxAttempts
-	s.Config.AuthDefender.IntervalMins = constants.DefaultAuthDefendIntervalMins
-	s.Config.AuthDefender.LockoutDurationMins = constants.DefaultAuthDefendLockoutMins
 	if s.Config.TokenDurationMins == 0 {
 		s.Config.TokenDurationMins = constants.DefaultTokenDurationMins
 	}
