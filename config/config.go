@@ -9,7 +9,6 @@ import (
 	"intel/isecl/cms/v3/constants"
 	"os"
 	"path"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -47,15 +46,7 @@ type Configuration struct {
 	AasJwtCn               string
 	AasTlsCn               string
 	AasTlsSan              string
-
-	AuthDefender struct {
-		MaxAttempts         int
-		IntervalMins        int
-		LockoutDurationMins int
-	}
 }
-
-var mu sync.Mutex
 
 var global *Configuration
 
@@ -105,7 +96,7 @@ func Load(path string) *Configuration {
 	file, err := os.Open(path)
 	if err == nil {
 		defer file.Close()
-		yaml.NewDecoder(file).Decode(&c)
+		_ = yaml.NewDecoder(file).Decode(&c)
 	} else {
 		// file doesnt exist, create a new blank one
 		c.LogLevel = logrus.InfoLevel
