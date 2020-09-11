@@ -33,11 +33,11 @@ swagger: swagger-get swagger-doc
 docker: installer
 	cp dist/docker/entrypoint.sh out/entrypoint.sh && chmod +x out/entrypoint.sh
 ifeq ($(PROXY_EXISTS),1)
-	docker build -t isecl/cms:latest --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -f ./dist/docker/Dockerfile ./out
+	docker build -t isecl/cms:$(VERSION) --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -f ./dist/docker/Dockerfile ./out
 else
-	docker build -t isecl/cms:latest  -f ./dist/docker/Dockerfile ./out
+	docker build -t isecl/cms:$(VERSION) -f ./dist/docker/Dockerfile ./out
 endif
-	docker save isecl/cms:latest > ./out/docker-cms-$(VERSION)-$(GITCOMMIT).tar
+	docker save isecl/cms:$(VERSION) > ./out/docker-cms-$(VERSION)-$(GITCOMMIT).tar
 
 docker-zip: installer
 	mkdir -p out/docker-cms

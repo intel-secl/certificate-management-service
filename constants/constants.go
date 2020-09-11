@@ -23,7 +23,7 @@ const (
 	LogDir                         = "/var/log/cms/"
 	LogFile                        = LogDir + "cms.log"
 	SecurityLogFile                = LogDir + "cms-security.log"
-	HTTPLogFile                    = "http.log"
+	HTTPLogFile                    = LogDir + "http.log"
 	ConfigFile                     = "config.yml"
 	TokenKeyFile                   = "cms-jwt.key"
 	TrustedJWTSigningCertsDir      = ConfigDir + "jwt/"

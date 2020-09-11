@@ -1,7 +1,11 @@
-FROM registry.access.redhat.com/ubi7-init:7.6
+FROM centos:8
 
-COPY cms-*.bin /tmp/cms.bin
+RUN useradd -u 1001 --comment "Certificate Management Service" --home /opt/cms  --shell /bin/false cms
+
+RUN mkdir -p /opt/cms/bin
+COPY cms /opt/cms/bin/
+RUN ln -sfT  /opt/cms/bin/cms /usr/bin/cms
+
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod 755 /tmp/cms.bin && env CMS_NOSETUP=true /tmp/cms.bin && rm /tmp/cms.bin
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh"]
